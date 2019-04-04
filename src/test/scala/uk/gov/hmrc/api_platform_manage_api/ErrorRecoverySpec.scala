@@ -18,12 +18,14 @@ package uk.gov.hmrc.api_platform_manage_api
 
 import java.net.HttpURLConnection._
 
+import com.amazonaws.services.lambda.runtime.LambdaLogger
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import org.scalatest._
+import org.scalatest.mockito.MockitoSugar
 import software.amazon.awssdk.services.apigateway.model._
 import uk.gov.hmrc.api_platform_manage_api.ErrorRecovery.TooManyRequests
 
-class ErrorRecoverySpec extends WordSpecLike with Matchers {
+class ErrorRecoverySpec extends WordSpecLike with Matchers with MockitoSugar {
 
   val errorMessage = "something went wrong"
   val errors: Map[Exception, Int] = Map(
@@ -40,7 +42,7 @@ class ErrorRecoverySpec extends WordSpecLike with Matchers {
   "error recovery" should {
     errors foreach { ex =>
       s"handle ${ex._1.getClass.getSimpleName}" in {
-        val responseEvent: APIGatewayProxyResponseEvent = ErrorRecovery.recovery(ex._1)
+        val responseEvent: APIGatewayProxyResponseEvent = ErrorRecovery.recovery(mock[LambdaLogger])(ex._1)
         responseEvent should have('statusCode (ex._2), 'body (errorMessage))
       }
     }
