@@ -18,6 +18,7 @@ package uk.gov.hmrc.api_platform_manage_api
 
 import java.net.HttpURLConnection._
 
+import com.amazonaws.services.lambda.runtime.LambdaLogger
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import software.amazon.awssdk.services.apigateway.model._
 
@@ -25,20 +26,21 @@ object ErrorRecovery {
 
   val TooManyRequests: Int = 429
 
-  def recovery: PartialFunction[Throwable, APIGatewayProxyResponseEvent] = {
-    case e: UnauthorizedException => exceptionResponse(HTTP_UNAUTHORIZED, e)
-    case e: LimitExceededException => exceptionResponse(TooManyRequests, e)
-    case e: BadRequestException => exceptionResponse(HTTP_BAD_REQUEST, e)
-    case e: TooManyRequestsException => exceptionResponse(TooManyRequests, e)
-    case e: ConflictException => exceptionResponse(HTTP_CONFLICT, e)
-    case e: ServiceUnavailableException => exceptionResponse(HTTP_UNAVAILABLE, e)
-    case e: NotFoundException => exceptionResponse(HTTP_NOT_FOUND, e)
+  def recovery(logger: LambdaLogger): PartialFunction[Throwable, APIGatewayProxyResponseEvent] = {
+    case e: UnauthorizedException => exceptionResponse(HTTP_UNAUTHORIZED, e, logger)
+    case e: LimitExceededException => exceptionResponse(TooManyRequests, e, logger)
+    case e: BadRequestException => exceptionResponse(HTTP_BAD_REQUEST, e, logger)
+    case e: TooManyRequestsException => exceptionResponse(TooManyRequests, e, logger)
+    case e: ConflictException => exceptionResponse(HTTP_CONFLICT, e, logger)
+    case e: ServiceUnavailableException => exceptionResponse(HTTP_UNAVAILABLE, e, logger)
+    case e: NotFoundException => exceptionResponse(HTTP_NOT_FOUND, e, logger)
 
     // Allow AwsServiceException, SdkClientException and ApiGatewayException to fall through and return 500
-    case e: Throwable => exceptionResponse(HTTP_INTERNAL_ERROR, e)
+    case e: Throwable => exceptionResponse(HTTP_INTERNAL_ERROR, e, logger)
   }
 
-  def exceptionResponse(statusCode: Int, exception: Throwable): APIGatewayProxyResponseEvent =
+  def exceptionResponse(statusCode: Int, exception: Throwable, logger: LambdaLogger): APIGatewayProxyResponseEvent = {
+    logger.log(exception.getMessage)
     new APIGatewayProxyResponseEvent().withStatusCode(statusCode).withBody(exception.getMessage)
-
+  }
 }
