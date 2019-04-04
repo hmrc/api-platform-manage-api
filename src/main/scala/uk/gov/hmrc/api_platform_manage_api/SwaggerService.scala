@@ -56,16 +56,17 @@ class SwaggerService(environment: Map[String, String]) {
     }
   }
 
-  private def amazonApigatewayPolicy(requestEvent: APIGatewayProxyRequestEvent): Map[String, Object] = {
-    Map("Version" -> "2012-10-17",
-      "Statement" -> List(
-        Map("Effect" -> "Allow", "Principal" -> "*", "Action" -> "execute-api:Invoke", "Resource" -> "*", "Condition" ->
-          Map("IpAddress" ->
-            Map("aws:SourceIp" -> s"${requestEvent.getRequestContext.getIdentity.getSourceIp}/32")
-          )
-        )
-      )
-    )
+  private def amazonApigatewayPolicy(requestEvent: APIGatewayProxyRequestEvent): ApiGatewayPolicy = {
+    val condition = if (environment.isDefinedAt("vpc_endpoint_id")) vpceCondition() else ipAddressCondition(requestEvent)
+    ApiGatewayPolicy(statement = List(Statement(condition = condition)))
+  }
+
+  private def ipAddressCondition(requestEvent: APIGatewayProxyRequestEvent): IpAddressCondition = {
+    IpAddressCondition(IpAddress(s"${requestEvent.getRequestContext.getIdentity.getSourceIp}/32"))
+  }
+
+  private def vpceCondition(): VpceCondition = {
+    VpceCondition(StringEquals(environment("vpc_endpoint_id")))
   }
 
   private def amazonApigatewayResponses: Map[String, Object] = {
