@@ -18,10 +18,15 @@ package uk.gov.hmrc.api_platform_manage_api
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-case class ApiGatewayPolicy(version: String = "2012-10-17", statement: List[Statement])
-case class Statement(effect: String = "Allow", principal: String = "*", action: String = "execute-api:Invoke", resource: String = "*", condition: Condition)
+case class ApiGatewayPolicy(@JsonProperty("Version") version: String = "2012-10-17",
+                            @JsonProperty("Statement") statement: List[Statement])
+case class Statement(@JsonProperty("Effect") effect: String = "Allow",
+                     @JsonProperty("Principal") principal: String = "*",
+                     @JsonProperty("Action") action: String = "execute-api:Invoke",
+                     @JsonProperty("Resource") resource: String = "*",
+                     @JsonProperty("Condition") condition: Condition)
 sealed trait Condition
-case class IpAddressCondition(ipAddress: IpAddress) extends Condition
+case class IpAddressCondition(@JsonProperty("IpAddress") ipAddress: IpAddress) extends Condition
 case class IpAddress(@JsonProperty("aws:SourceIp") awsSourceIp: String)
-case class VpceCondition(stringEquals: StringEquals) extends Condition
+case class VpceCondition(@JsonProperty("StringEquals") stringEquals: StringEquals) extends Condition
 case class StringEquals(@JsonProperty("aws:sourceVpce") awsSourceVpce: String)
