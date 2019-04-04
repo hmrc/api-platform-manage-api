@@ -57,7 +57,11 @@ class SwaggerService(environment: Map[String, String]) {
   }
 
   private def amazonApigatewayPolicy(requestEvent: APIGatewayProxyRequestEvent): ApiGatewayPolicy = {
-    val condition = if (environment.isDefinedAt("vpc_endpoint_id")) vpceCondition() else ipAddressCondition(requestEvent)
+    val condition = if (environment.isDefinedAt("endpoint_type") && environment("endpoint_type") == "REGIONAL") {
+      ipAddressCondition(requestEvent)
+    } else {
+      vpceCondition()
+    }
     ApiGatewayPolicy(statement = List(Statement(condition = condition)))
   }
 

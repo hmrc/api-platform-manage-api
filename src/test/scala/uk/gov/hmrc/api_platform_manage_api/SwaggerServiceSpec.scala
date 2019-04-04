@@ -57,6 +57,15 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers {
     val swaggerService = new SwaggerService(environment)
   }
 
+  trait SetupForRegionalEndpoints extends Setup {
+    val environment: Map[String, String] = Map(
+      "domain" -> "integration.tax.service.gov.uk",
+      "vpc_link_id" -> "gix6s7",
+      "endpoint_type" -> "REGIONAL"
+    )
+    val swaggerService = new SwaggerService(environment)
+  }
+
   "createSwagger" should {
 
     "add amazon extension for API gateway policy" in new StandardSetup {
@@ -70,7 +79,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers {
       condition.stringEquals.awsSourceVpce shouldEqual environment("vpc_endpoint_id")
     }
 
-    "default to IP address condition if no VPC endpoint ID specified in the environment" in new SetupWithoutVpcEndpointId {
+    "add IP address condition if endpoint type is regional" in new SetupForRegionalEndpoints {
       val swagger: Swagger = swaggerService.createSwagger(requestEvent())
 
       swagger.getVendorExtensions should contain key "x-amazon-apigateway-policy"
@@ -79,6 +88,13 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers {
       apiGatewayPolicy.statement.head.condition shouldBe a [IpAddressCondition]
       val condition: IpAddressCondition = apiGatewayPolicy.statement.head.condition.asInstanceOf[IpAddressCondition]
       condition.ipAddress.awsSourceIp shouldEqual "127.0.0.1/32"
+    }
+
+    "throw exception if no VPC endpoint ID specified in the environment and endpoint type is not regional" in new SetupWithoutVpcEndpointId {
+      val ex: Exception = intercept[Exception] {
+        swaggerService.createSwagger(requestEvent())
+      }
+      ex.getMessage shouldEqual "key not found: vpc_endpoint_id"
     }
 
     "add amazon extension for API gateway responses" in new StandardSetup {
