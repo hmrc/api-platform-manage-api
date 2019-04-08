@@ -10,7 +10,7 @@ lazy val appName = "api-platform-manage-api"
 lazy val appDependencies: Seq[ModuleID] = compileDependencies ++ testDependencies
 
 lazy val compileDependencies = Seq(
-  "io.github.mkotsur" %% "aws-lambda-scala" % "0.1.1",
+  "uk.gov.hmrc" %% "aws-gateway-proxied-request-lambda" % "0.4.0",
   "software.amazon.awssdk" % "apigateway" % "2.5.13",
   "io.swagger" % "swagger-parser" % "1.0.42"
 )
@@ -19,6 +19,7 @@ lazy val testScope: String = "test"
 
 lazy val testDependencies = Seq(
   "org.scalatest" %% "scalatest" % "3.0.5" % testScope,
+  "com.stephenn" %% "scalatest-json-jsonassert" % "0.0.3" % testScope,
   "org.pegdown" % "pegdown" % "1.6.0" % testScope,
   "org.mockito" % "mockito-core" % "2.25.1" % testScope
 )

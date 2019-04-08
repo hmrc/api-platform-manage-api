@@ -39,7 +39,7 @@ class SwaggerService(environment: Map[String, String]) {
       }
     }
     swagger.vendorExtension("x-amazon-apigateway-policy", amazonApigatewayPolicy(requestEvent))
-    swagger.vendorExtension("x-amazon-apigateway-gateway-responses", amazonApigatewayResponses)
+    swagger.vendorExtension("x-amazon-apigateway-gateway-responses", amazonApigatewayResponses(swagger.getInfo.getVersion))
   }
 
   private def amazonApigatewayIntegration(host: String, path: String, operation: (HttpMethod, Operation)): Map[String, Object] = {
@@ -73,10 +73,14 @@ class SwaggerService(environment: Map[String, String]) {
     VpceCondition(StringEquals(environment("vpc_endpoint_id")))
   }
 
-  private def amazonApigatewayResponses: Map[String, Object] = {
-    Map("MISSING_AUTHENTICATION_TOKEN" -> Map("statusCode" -> "404", "responseTemplates" ->
-      Map("application/json" -> """{"code": "MATCHING_RESOURCE_NOT_FOUND", "message": "A resource with the name in the request can not be found in the API"}""")),
+  private def amazonApigatewayResponses(version: String): Map[String, Object] = {
+    Map(
+      "MISSING_AUTHENTICATION_TOKEN" -> Map("statusCode" -> "404", "responseTemplates" ->
+        Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MATCHING_RESOURCE_NOT_FOUND", "message": "A resource with the name in the request can not be found in the API"}""",
+            s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MATCHING_RESOURCE_NOT_FOUND</code><message>A resource with the name in the request can not be found in the API</message></errorResponse>")),
       "THROTTLED" -> Map("statusCode" -> "429", "responseTemplates" ->
-        Map("application/json" -> """{"code": "MESSAGE_THROTTLED_OUT", "message", "The request for the API is throttled as you have exceeded your quota."}""")))
+        Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MESSAGE_THROTTLED_OUT", "message", "The request for the API is throttled as you have exceeded your quota."}""",
+            s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MESSAGE_THROTTLED_OUT</code><message>The request for the API is throttled as you have exceeded your quota.</message></errorResponse>"))
+    )
   }
 }
