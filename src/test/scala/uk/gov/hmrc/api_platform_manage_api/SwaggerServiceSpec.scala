@@ -17,12 +17,14 @@
 package uk.gov.hmrc.api_platform_manage_api
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent
+import com.stephenn.scalatest.jsonassert.JsonMatchers
 import io.swagger.models.Swagger
 import org.scalatest._
+import uk.gov.hmrc.aws_gateway_proxied_request_lambda.JsonMapper
 
 import scala.collection.JavaConverters._
 
-class SwaggerServiceSpec extends WordSpecLike with Matchers {
+class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers with JsonMapper {
 
   trait Setup {
     def requestEvent(host: String = "api-example-microservice.protected.mdtp"): APIGatewayProxyRequestEvent = {
@@ -98,9 +100,28 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers {
     }
 
     "add amazon extension for API gateway responses" in new StandardSetup {
+      val expectedJson: String =
+        """{
+          |  "MISSING_AUTHENTICATION_TOKEN":{
+          |    "statusCode":"404",
+          |    "responseTemplates":{
+          |      "application/vnd.hmrc.1.0+json":"{\"code\": \"MATCHING_RESOURCE_NOT_FOUND\", \"message\": \"A resource with the name in the request can not be found in the API\"}",
+          |      "application/vnd.hmrc.1.0+xml":"<errorResponse><code>MATCHING_RESOURCE_NOT_FOUND</code><message>A resource with the name in the request can not be found in the API</message></errorResponse>"
+          |    }
+          |  },
+          |  "THROTTLED":{
+          |    "statusCode":"429",
+          |    "responseTemplates":{
+          |      "application/vnd.hmrc.1.0+json":"{\"code\": \"MESSAGE_THROTTLED_OUT\", \"message\", \"The request for the API is throttled as you have exceeded your quota.\"}",
+          |      "application/vnd.hmrc.1.0+xml":"<errorResponse><code>MESSAGE_THROTTLED_OUT</code><message>The request for the API is throttled as you have exceeded your quota.</message></errorResponse>"
+          |    }
+          |  }
+          |}""".stripMargin
+
       val swagger: Swagger = swaggerService.createSwagger(requestEvent())
 
       swagger.getVendorExtensions should contain key "x-amazon-apigateway-gateway-responses"
+      toJson(swagger.getVendorExtensions.get("x-amazon-apigateway-gateway-responses")) should matchJson(expectedJson)
     }
 
     "add amazon extensions for API gateway integrations" in new StandardSetup {
