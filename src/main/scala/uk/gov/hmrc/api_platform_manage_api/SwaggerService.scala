@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.api_platform_manage_api
 
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent
 import io.swagger.models.{HttpMethod, Operation, Swagger}
 import io.swagger.parser.SwaggerParser
 
@@ -31,14 +30,14 @@ class SwaggerService(environment: Map[String, String]) {
     this(sys.env)
   }
 
-  def createSwagger(requestEvent: APIGatewayProxyRequestEvent): Swagger = {
-    val swagger: Swagger = new SwaggerParser().parse(requestEvent.getBody)
+  def createSwagger(swaggerJson: String): Swagger = {
+    val swagger: Swagger = new SwaggerParser().parse(swaggerJson)
     swagger.getPaths.asScala foreach { path =>
       path._2.getOperationMap.asScala foreach { op =>
         op._2.setVendorExtension("x-amazon-apigateway-integration", amazonApigatewayIntegration(swagger.getHost, path._1, op))
       }
     }
-    swagger.vendorExtension("x-amazon-apigateway-policy", amazonApigatewayPolicy(requestEvent))
+    swagger.vendorExtension("x-amazon-apigateway-policy", amazonApigatewayPolicy())
     swagger.vendorExtension("x-amazon-apigateway-gateway-responses", amazonApigatewayResponses(swagger.getInfo.getVersion))
   }
 
@@ -56,21 +55,13 @@ class SwaggerService(environment: Map[String, String]) {
     }
   }
 
-  private def amazonApigatewayPolicy(requestEvent: APIGatewayProxyRequestEvent): ApiGatewayPolicy = {
+  private def amazonApigatewayPolicy(): ApiGatewayPolicy = {
     val condition = if (environment.isDefinedAt("endpoint_type") && environment("endpoint_type") == "REGIONAL") {
-      ipAddressCondition(requestEvent)
+      IpAddressCondition(IpAddress(environment("office_ip_address")))
     } else {
-      vpceCondition()
+      VpceCondition(StringEquals(environment("vpc_endpoint_id")))
     }
     ApiGatewayPolicy(statement = List(Statement(condition = condition)))
-  }
-
-  private def ipAddressCondition(requestEvent: APIGatewayProxyRequestEvent): IpAddressCondition = {
-    IpAddressCondition(IpAddress(s"${requestEvent.getRequestContext.getIdentity.getSourceIp}/32"))
-  }
-
-  private def vpceCondition(): VpceCondition = {
-    VpceCondition(StringEquals(environment("vpc_endpoint_id")))
   }
 
   private def amazonApigatewayResponses(version: String): Map[String, Object] = {
