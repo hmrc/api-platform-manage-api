@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.api_platform_manage_api
 
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent
 import com.stephenn.scalatest.jsonassert.JsonMatchers
 import io.swagger.models.Swagger
 import org.scalatest._
@@ -26,27 +25,36 @@ import scala.collection.JavaConverters._
 
 class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers with JsonMapper {
 
+  val officeIpAddress = "192.168.1.1/32"
+
   trait Setup {
-    def requestEvent(host: String = "api-example-microservice.protected.mdtp"): APIGatewayProxyRequestEvent = {
-      new APIGatewayProxyRequestEvent()
-        .withHttpMethod("POST")
-        .withRequestContext(new APIGatewayProxyRequestEvent.ProxyRequestContext()
-          .withIdentity(new APIGatewayProxyRequestEvent.RequestIdentity()
-            .withSourceIp("127.0.0.1")))
-        .withBody(
-          s"""{"host": "$host", "paths": {"/world": {"get": {"responses": {"200": {"description": "OK"}},
-             |"x-auth-type": "Application User", "x-throttling-tier": "Unlimited",
-             |"x-scope": "read:state-pension-calculation"}}}, "info": {"title": "Test OpenAPI 2","version": "1.0"},
-             |"swagger": "2.0"}""".stripMargin
-        )
-    }
+//    def requestEvent(host: String = "api-example-microservice.protected.mdtp"): APIGatewayProxyRequestEvent = {
+//      new APIGatewayProxyRequestEvent()
+//        .withHttpMethod("POST")
+//        .withRequestContext(new APIGatewayProxyRequestEvent.ProxyRequestContext()
+//          .withIdentity(new APIGatewayProxyRequestEvent.RequestIdentity()
+//            .withSourceIp("127.0.0.1")))
+//        .withBody(
+//          s"""{"host": "$host", "paths": {"/world": {"get": {"responses": {"200": {"description": "OK"}},
+//             |"x-auth-type": "Application User", "x-throttling-tier": "Unlimited",
+//             |"x-scope": "read:state-pension-calculation"}}}, "info": {"title": "Test OpenAPI 2","version": "1.0"},
+//             |"swagger": "2.0"}""".stripMargin
+//        )
+//    }
+
+    def swaggerJson(host: String = "api-example-microservice.protected.mdtp"): String =
+      s"""{"host": "$host", "paths": {"/world": {"get": {"responses": {"200": {"description": "OK"}},
+          |"x-auth-type": "Application User", "x-throttling-tier": "Unlimited",
+          |"x-scope": "read:state-pension-calculation"}}}, "info": {"title": "Test OpenAPI 2","version": "1.0"},
+          |"swagger": "2.0"}""".stripMargin
   }
 
   trait StandardSetup extends Setup {
     val environment: Map[String, String] = Map(
       "domain" -> "integration.tax.service.gov.uk",
       "vpc_link_id" -> "gix6s7",
-      "vpc_endpoint_id" -> "abc2d3"
+      "vpc_endpoint_id" -> "abc2d3",
+      "office_ip_address" -> officeIpAddress
     )
     val swaggerService = new SwaggerService(environment)
   }
@@ -54,7 +62,8 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
   trait SetupWithoutVpcEndpointId extends Setup {
     val environment: Map[String, String] = Map(
       "domain" -> "integration.tax.service.gov.uk",
-      "vpc_link_id" -> "gix6s7"
+      "vpc_link_id" -> "gix6s7",
+      "office_ip_address" -> officeIpAddress
     )
     val swaggerService = new SwaggerService(environment)
   }
@@ -63,7 +72,8 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
     val environment: Map[String, String] = Map(
       "domain" -> "integration.tax.service.gov.uk",
       "vpc_link_id" -> "gix6s7",
-      "endpoint_type" -> "REGIONAL"
+      "endpoint_type" -> "REGIONAL",
+      "office_ip_address" -> officeIpAddress
     )
     val swaggerService = new SwaggerService(environment)
   }
@@ -71,7 +81,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
   "createSwagger" should {
 
     "add amazon extension for API gateway policy" in new StandardSetup {
-      val swagger: Swagger = swaggerService.createSwagger(requestEvent())
+      val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
 
       swagger.getVendorExtensions should contain key "x-amazon-apigateway-policy"
       val apiGatewayPolicy: ApiGatewayPolicy = swagger.getVendorExtensions.get("x-amazon-apigateway-policy").asInstanceOf[ApiGatewayPolicy]
@@ -82,19 +92,19 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
     }
 
     "add IP address condition if endpoint type is regional" in new SetupForRegionalEndpoints {
-      val swagger: Swagger = swaggerService.createSwagger(requestEvent())
+      val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
 
       swagger.getVendorExtensions should contain key "x-amazon-apigateway-policy"
       val apiGatewayPolicy: ApiGatewayPolicy = swagger.getVendorExtensions.get("x-amazon-apigateway-policy").asInstanceOf[ApiGatewayPolicy]
       apiGatewayPolicy.statement should have length 1
       apiGatewayPolicy.statement.head.condition shouldBe a [IpAddressCondition]
       val condition: IpAddressCondition = apiGatewayPolicy.statement.head.condition.asInstanceOf[IpAddressCondition]
-      condition.ipAddress.awsSourceIp shouldEqual "127.0.0.1/32"
+      condition.ipAddress.awsSourceIp shouldEqual officeIpAddress
     }
 
     "throw exception if no VPC endpoint ID specified in the environment and endpoint type is not regional" in new SetupWithoutVpcEndpointId {
       val ex: Exception = intercept[Exception] {
-        swaggerService.createSwagger(requestEvent())
+        swaggerService.createSwagger(swaggerJson())
       }
       ex.getMessage shouldEqual "key not found: vpc_endpoint_id"
     }
@@ -118,14 +128,14 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |  }
           |}""".stripMargin
 
-      val swagger: Swagger = swaggerService.createSwagger(requestEvent())
+      val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
 
       swagger.getVendorExtensions should contain key "x-amazon-apigateway-gateway-responses"
       toJson(swagger.getVendorExtensions.get("x-amazon-apigateway-gateway-responses")) should matchJson(expectedJson)
     }
 
     "add amazon extensions for API gateway integrations" in new StandardSetup {
-      val swagger: Swagger = swaggerService.createSwagger(requestEvent())
+      val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
 
       swagger.getPaths.asScala foreach { path =>
         path._2.getOperations.asScala foreach { op =>
@@ -144,7 +154,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
 
     "handle a host with an incorrect format" in new StandardSetup {
       val ex: Exception = intercept[Exception] {
-        swaggerService.createSwagger(requestEvent(host = "api-example-microservice"))
+        swaggerService.createSwagger(swaggerJson(host = "api-example-microservice"))
       }
       ex.getMessage shouldEqual "Invalid host format"
     }
