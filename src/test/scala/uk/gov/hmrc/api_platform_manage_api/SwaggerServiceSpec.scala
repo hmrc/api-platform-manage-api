@@ -28,20 +28,6 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
   val officeIpAddress = "192.168.1.1/32"
 
   trait Setup {
-//    def requestEvent(host: String = "api-example-microservice.protected.mdtp"): APIGatewayProxyRequestEvent = {
-//      new APIGatewayProxyRequestEvent()
-//        .withHttpMethod("POST")
-//        .withRequestContext(new APIGatewayProxyRequestEvent.ProxyRequestContext()
-//          .withIdentity(new APIGatewayProxyRequestEvent.RequestIdentity()
-//            .withSourceIp("127.0.0.1")))
-//        .withBody(
-//          s"""{"host": "$host", "paths": {"/world": {"get": {"responses": {"200": {"description": "OK"}},
-//             |"x-auth-type": "Application User", "x-throttling-tier": "Unlimited",
-//             |"x-scope": "read:state-pension-calculation"}}}, "info": {"title": "Test OpenAPI 2","version": "1.0"},
-//             |"swagger": "2.0"}""".stripMargin
-//        )
-//    }
-
     def swaggerJson(host: String = "api-example-microservice.protected.mdtp"): String =
       s"""{"host": "$host", "paths": {"/world": {"get": {"responses": {"200": {"description": "OK"}},
           |"x-auth-type": "Application User", "x-throttling-tier": "Unlimited",
