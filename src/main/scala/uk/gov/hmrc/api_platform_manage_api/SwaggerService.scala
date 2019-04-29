@@ -36,7 +36,9 @@ class SwaggerService(environment: Map[String, String]) {
     swagger.getPaths.asScala foreach { path =>
       path._2.getOperationMap.asScala foreach { op =>
         op._2.setVendorExtension("x-amazon-apigateway-integration", amazonApigatewayIntegration(swagger.getHost, path._1, op))
-        op._2.addSecurity("application-authorizer", List())
+        if (op._2.getVendorExtensions.getOrDefault("x-auth-type", "") == "Application & Application User") {
+          op._2.addSecurity("application-authorizer", List())
+        }
       }
     }
     swagger.vendorExtension("x-amazon-apigateway-policy", amazonApigatewayPolicy)

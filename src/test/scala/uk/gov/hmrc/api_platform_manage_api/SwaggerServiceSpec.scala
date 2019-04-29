@@ -40,10 +40,12 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
     )
 
     def swaggerJson(host: String = "api-example-microservice.protected.mdtp"): String =
-      s"""{"host": "$host", "paths": {"/world": {"get": {"responses": {"200": {"description": "OK"}},
-          |"x-auth-type": "Application User", "x-throttling-tier": "Unlimited",
-          |"x-scope": "read:state-pension-calculation"}}}, "info": {"title": "Test OpenAPI 2","version": "1.0"},
-          |"swagger": "2.0"}""".stripMargin
+      s"""{"host": "$host", "paths": {
+          |"/application": {"get": {"responses": {"200": {"description": "OK"}},
+          |"x-auth-type": "Application & Application User", "x-throttling-tier": "Unlimited"}},
+          |"/world": {"get": {"responses": {"200": {"description": "OK"}},
+          |"x-auth-type": "None", "x-throttling-tier": "Unlimited"}}},
+          |"info": {"title": "Test OpenAPI 2","version": "1.0"}, "swagger": "2.0"}""".stripMargin
   }
 
   trait StandardSetup extends Setup {
@@ -147,7 +149,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           vendorExtensions.keys should contain("x-amazon-apigateway-integration")
           vendorExtensions("x-amazon-apigateway-integration") match {
             case ve: Map[String, Object] =>
-              ve("uri") shouldEqual "https://api-example-microservice.integration.tax.service.gov.uk/world"
+              ve("uri") shouldEqual s"https://api-example-microservice.integration.tax.service.gov.uk${path._1}"
               ve("connectionId") shouldEqual environment("vpc_link_id")
               ve("httpMethod") shouldEqual "GET"
             case _ => throw new ClassCastException
@@ -156,14 +158,12 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       }
     }
 
-    "add the application authorizer to the operations with an empty scope list" in new StandardSetup {
+    "add the application authorizer to the application restricted endpoints only" in new StandardSetup {
       val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
 
-      swagger.getPaths.asScala foreach { path =>
-        path._2.getOperations.asScala foreach { op =>
-          toJson(op.getSecurity) should matchJson("""[ {"application-authorizer" : [ ]} ]""")
-        }
-      }
+      val paths = swagger.getPaths.asScala
+      paths("/world").getGet.getSecurity shouldBe null
+      toJson(paths("/application").getGet.getSecurity) should matchJson("""[ {"application-authorizer" : [ ]} ]""")
     }
 
     "handle a host with an incorrect format" in new StandardSetup {
