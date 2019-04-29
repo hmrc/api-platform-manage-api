@@ -44,6 +44,7 @@ class SwaggerService(environment: Map[String, String]) {
     swagger.vendorExtension("x-amazon-apigateway-policy", amazonApigatewayPolicy)
     swagger.vendorExtension("x-amazon-apigateway-gateway-responses", amazonApigatewayResponses(swagger.getInfo.getVersion))
     swagger.vendorExtension("securityDefinitions", securityDefinitions)
+    swagger.vendorExtension("x-amazon-apigateway-api-key-source", "AUTHORIZER")
   }
 
   private def amazonApigatewayIntegration(host: String, path: String, operation: (HttpMethod, Operation)): Map[String, Object] = {
