@@ -19,6 +19,7 @@ package uk.gov.hmrc.api_platform_manage_api
 import io.swagger.models.{HttpMethod, Operation, Swagger}
 import io.swagger.parser.SwaggerParser
 
+import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.util.matching.Regex
 
@@ -35,10 +36,12 @@ class SwaggerService(environment: Map[String, String]) {
     swagger.getPaths.asScala foreach { path =>
       path._2.getOperationMap.asScala foreach { op =>
         op._2.setVendorExtension("x-amazon-apigateway-integration", amazonApigatewayIntegration(swagger.getHost, path._1, op))
+        op._2.addSecurity("application-authorizer", List())
       }
     }
-    swagger.vendorExtension("x-amazon-apigateway-policy", amazonApigatewayPolicy())
+    swagger.vendorExtension("x-amazon-apigateway-policy", amazonApigatewayPolicy)
     swagger.vendorExtension("x-amazon-apigateway-gateway-responses", amazonApigatewayResponses(swagger.getInfo.getVersion))
+    swagger.vendorExtension("securityDefinitions", securityDefinitions)
   }
 
   private def amazonApigatewayIntegration(host: String, path: String, operation: (HttpMethod, Operation)): Map[String, Object] = {
@@ -55,7 +58,7 @@ class SwaggerService(environment: Map[String, String]) {
     }
   }
 
-  private def amazonApigatewayPolicy(): ApiGatewayPolicy = {
+  private def amazonApigatewayPolicy: ApiGatewayPolicy = {
     val condition = if (environment.isDefinedAt("endpoint_type") && environment("endpoint_type") == "REGIONAL") {
       IpAddressCondition(IpAddress(environment("office_ip_address")))
     } else {
@@ -72,6 +75,15 @@ class SwaggerService(environment: Map[String, String]) {
       "THROTTLED" -> Map("statusCode" -> "429", "responseTemplates" ->
         Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MESSAGE_THROTTLED_OUT", "message", "The request for the API is throttled as you have exceeded your quota."}""",
             s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MESSAGE_THROTTLED_OUT</code><message>The request for the API is throttled as you have exceeded your quota.</message></errorResponse>"))
+    )
+  }
+
+  private def securityDefinitions: Map[String, Object] = {
+    Map("application-authorizer" ->
+      Map("type" -> "apiKey", "name" -> "Authorization", "in" -> "header", "x-amazon-apigateway-authorizer" ->
+        Map("type" -> "token", "authorizerUri" -> environment("authorizerUri"),
+          "authorizerCredentials" -> environment("authorizerCredentials"), "authorizerResultTtlInSeconds" -> "300")
+      )
     )
   }
 }
