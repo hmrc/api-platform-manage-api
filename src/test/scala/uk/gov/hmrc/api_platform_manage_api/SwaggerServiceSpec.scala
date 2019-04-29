@@ -166,6 +166,13 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       toJson(paths("/application").getGet.getSecurity) should matchJson("""[ {"application-authorizer" : [ ]} ]""")
     }
 
+    "add amazon extension for API key source" in new StandardSetup {
+      val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
+
+      swagger.getVendorExtensions should contain key "x-amazon-apigateway-api-key-source"
+      swagger.getVendorExtensions.get("x-amazon-apigateway-api-key-source") shouldEqual "AUTHORIZER"
+    }
+
     "handle a host with an incorrect format" in new StandardSetup {
       val ex: Exception = intercept[Exception] {
         swaggerService.createSwagger(swaggerJson(host = "api-example-microservice"))
