@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.api_platform_manage_api
 
+import java.util.UUID
+
 import com.stephenn.scalatest.jsonassert.JsonMatchers
 import io.swagger.models.Swagger
 import org.scalatest._
@@ -26,42 +28,38 @@ import scala.collection.JavaConverters._
 class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers with JsonMapper {
 
   val officeIpAddress = "192.168.1.1/32"
+  val vpcEndpointId: String = UUID.randomUUID().toString
 
   trait Setup {
+    val environment: Map[String, String] = Map(
+      "domain" -> "integration.tax.service.gov.uk",
+      "vpc_link_id" -> "gix6s7",
+      "office_ip_address" -> officeIpAddress,
+      "authorizerUri" -> "arn:aws:apigateway:authorizer",
+      "authorizerCredentials" -> "arn:aws:iam::account-id:foobar"
+    )
+
     def swaggerJson(host: String = "api-example-microservice.protected.mdtp"): String =
-      s"""{"host": "$host", "paths": {"/world": {"get": {"responses": {"200": {"description": "OK"}},
-          |"x-auth-type": "Application User", "x-throttling-tier": "Unlimited",
-          |"x-scope": "read:state-pension-calculation"}}}, "info": {"title": "Test OpenAPI 2","version": "1.0"},
-          |"swagger": "2.0"}""".stripMargin
+      s"""{"host": "$host", "paths": {
+          |"/application": {"get": {"responses": {"200": {"description": "OK"}},
+          |"x-auth-type": "Application & Application User", "x-throttling-tier": "Unlimited"}},
+          |"/world": {"get": {"responses": {"200": {"description": "OK"}},
+          |"x-auth-type": "None", "x-throttling-tier": "Unlimited"}}},
+          |"info": {"title": "Test OpenAPI 2","version": "1.0"}, "swagger": "2.0"}""".stripMargin
   }
 
   trait StandardSetup extends Setup {
-    val environment: Map[String, String] = Map(
-      "domain" -> "integration.tax.service.gov.uk",
-      "vpc_link_id" -> "gix6s7",
-      "vpc_endpoint_id" -> "abc2d3",
-      "office_ip_address" -> officeIpAddress
-    )
-    val swaggerService = new SwaggerService(environment)
+    val extraVariables: Map[String, String] = Map("vpc_endpoint_id" -> vpcEndpointId)
+    val swaggerService = new SwaggerService(environment ++ extraVariables)
   }
 
   trait SetupWithoutVpcEndpointId extends Setup {
-    val environment: Map[String, String] = Map(
-      "domain" -> "integration.tax.service.gov.uk",
-      "vpc_link_id" -> "gix6s7",
-      "office_ip_address" -> officeIpAddress
-    )
     val swaggerService = new SwaggerService(environment)
   }
 
   trait SetupForRegionalEndpoints extends Setup {
-    val environment: Map[String, String] = Map(
-      "domain" -> "integration.tax.service.gov.uk",
-      "vpc_link_id" -> "gix6s7",
-      "endpoint_type" -> "REGIONAL",
-      "office_ip_address" -> officeIpAddress
-    )
-    val swaggerService = new SwaggerService(environment)
+    val extraVariables: Map[String, String] = Map("endpoint_type" -> "REGIONAL")
+    val swaggerService = new SwaggerService(environment ++ extraVariables)
   }
 
   "createSwagger" should {
@@ -74,7 +72,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       apiGatewayPolicy.statement should have length 1
       apiGatewayPolicy.statement.head.condition shouldBe a [VpceCondition]
       val condition: VpceCondition = apiGatewayPolicy.statement.head.condition.asInstanceOf[VpceCondition]
-      condition.stringEquals.awsSourceVpce shouldEqual environment("vpc_endpoint_id")
+      condition.stringEquals.awsSourceVpce shouldEqual vpcEndpointId
     }
 
     "add IP address condition if endpoint type is regional" in new SetupForRegionalEndpoints {
@@ -120,6 +118,28 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       toJson(swagger.getVendorExtensions.get("x-amazon-apigateway-gateway-responses")) should matchJson(expectedJson)
     }
 
+    "add security definitions" in new StandardSetup {
+      val expectedJson: String =
+        """{
+          |    "application-authorizer": {
+          |        "type": "apiKey",
+          |        "name": "Authorization",
+          |        "in": "header",
+          |        "x-amazon-apigateway-authorizer": {
+          |            "type": "token",
+          |            "authorizerUri": "arn:aws:apigateway:authorizer",
+          |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
+          |            "authorizerResultTtlInSeconds": "300"
+          |        }
+          |    }
+          |}""".stripMargin
+
+      val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
+
+      swagger.getVendorExtensions should contain key "securityDefinitions"
+      toJson(swagger.getVendorExtensions.get("securityDefinitions")) should matchJson(expectedJson)
+    }
+
     "add amazon extensions for API gateway integrations" in new StandardSetup {
       val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
 
@@ -129,13 +149,21 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           vendorExtensions.keys should contain("x-amazon-apigateway-integration")
           vendorExtensions("x-amazon-apigateway-integration") match {
             case ve: Map[String, Object] =>
-              ve("uri") shouldEqual "https://api-example-microservice.integration.tax.service.gov.uk/world"
+              ve("uri") shouldEqual s"https://api-example-microservice.integration.tax.service.gov.uk${path._1}"
               ve("connectionId") shouldEqual environment("vpc_link_id")
               ve("httpMethod") shouldEqual "GET"
             case _ => throw new ClassCastException
           }
         }
       }
+    }
+
+    "add the application authorizer to the application restricted endpoints only" in new StandardSetup {
+      val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
+
+      val paths = swagger.getPaths.asScala
+      paths("/world").getGet.getSecurity shouldBe null
+      toJson(paths("/application").getGet.getSecurity) should matchJson("""[ {"application-authorizer" : [ ]} ]""")
     }
 
     "handle a host with an incorrect format" in new StandardSetup {
