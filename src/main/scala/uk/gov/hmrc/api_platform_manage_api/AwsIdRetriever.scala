@@ -17,7 +17,7 @@
 package uk.gov.hmrc.api_platform_manage_api
 
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient
-import software.amazon.awssdk.services.apigateway.model.{GetRestApisRequest, GetRestApisResponse}
+import software.amazon.awssdk.services.apigateway.model.{GetRestApisRequest, GetRestApisResponse, GetUsagePlansRequest}
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
@@ -27,24 +27,47 @@ trait AwsIdRetriever {
   val apiGatewayClient: ApiGatewayClient
   val Limit: Int = 100
 
-  def getAwsIdByApiName(apiName: String): Option[String] = {
-    findAwsId(apiName, None)
+  def getAwsRestApiIdByApiName(apiName: String): Option[String] = {
+    findAwsRestApiId(apiName, None)
   }
 
   @tailrec
-  private def findAwsId(apiName: String, position: Option[String]): Option[String] = {
+  private def findAwsRestApiId(apiName: String, position: Option[String]): Option[String] = {
+    def buildRequest(position: Option[String]): GetRestApisRequest = {
+      position match {
+        case Some(p) => GetRestApisRequest.builder().limit(Limit).position(p).build()
+        case None => GetRestApisRequest.builder().limit(Limit).build()
+      }
+    }
+
     val response: GetRestApisResponse = apiGatewayClient.getRestApis(buildRequest(position))
 
     response.items().asScala.find(restApi => restApi.name == apiName) match {
       case Some(restApi) => Some(restApi.id)
-      case _ => if (response.items.size < Limit) None else findAwsId(apiName, Some(response.position))
+      case _ => if (response.items.size < Limit) None else findAwsRestApiId(apiName, Some(response.position))
     }
   }
 
-  private def buildRequest(position: Option[String]): GetRestApisRequest = {
-    position match {
-      case Some(p) => GetRestApisRequest.builder().limit(Limit).position(p).build()
-      case None => GetRestApisRequest.builder().limit(Limit).build()
+  def getAwsUsagePlanIdByApplicationName(applicationName: String): Option[String] = {
+    findAwsUsagePlanId(applicationName, None)
+  }
+
+  @tailrec
+  private def findAwsUsagePlanId(applicationName: String, position: Option[String]): Option[String] = {
+    def buildUsagePlanRequest(position: Option[String]): GetUsagePlansRequest = {
+      position match {
+        case Some(p) => GetUsagePlansRequest.builder().limit(Limit).position(p).build()
+        case None => GetUsagePlansRequest.builder().limit(Limit).build()
+      }
+    }
+
+    val response = apiGatewayClient.getUsagePlans(buildUsagePlanRequest(position))
+
+    response.items().asScala.find(usagePlan => usagePlan.name == applicationName) match {
+      case Some(usagePlan) => Some(usagePlan.id)
+      case _ => if (response.items.size < Limit) None else findAwsUsagePlanId(applicationName, Some(response.position))
     }
   }
+
+
 }

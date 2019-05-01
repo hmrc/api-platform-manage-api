@@ -23,7 +23,7 @@ import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpecLike}
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient
-import software.amazon.awssdk.services.apigateway.model.{GetRestApisRequest, GetRestApisResponse, RestApi}
+import software.amazon.awssdk.services.apigateway.model.{GetRestApisRequest, GetRestApisResponse, GetUsagePlansRequest, GetUsagePlansResponse, RestApi, UsagePlan}
 
 import scala.collection.JavaConverters._
 
@@ -36,14 +36,14 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
     override val Limit = 2
   }
 
-  "getAwsIdByApiName" should {
+  "getAwsRestApiIdByApiName" should {
     "find id on first page of results" in new Setup {
       val apiId = UUID.randomUUID().toString
       val apiName = "foo--1.0"
 
       when(mockApiGatewayClient.getRestApis(any[GetRestApisRequest])).thenReturn(buildMatchingRestApisResponse(apiId, apiName))
 
-      val returnedId = getAwsIdByApiName(apiName)
+      val returnedId = getAwsRestApiIdByApiName(apiName)
 
       returnedId shouldEqual Some(apiId)
     }
@@ -57,7 +57,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
           buildNonMatchingRestApisResponse(Limit),
           buildMatchingRestApisResponse(apiId, apiName))
 
-      val returnedId = getAwsIdByApiName(apiName)
+      val returnedId = getAwsRestApiIdByApiName(apiName)
 
       returnedId shouldEqual Some(apiId)
       verify(mockApiGatewayClient, times(2)).getRestApis(any[GetRestApisRequest])
@@ -68,7 +68,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
 
       when(mockApiGatewayClient.getRestApis(any[GetRestApisRequest])).thenReturn(GetRestApisResponse.builder().build())
 
-      val returnedId = getAwsIdByApiName(apiName)
+      val returnedId = getAwsRestApiIdByApiName(apiName)
 
       returnedId shouldEqual None
     }
@@ -84,6 +84,58 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
     val items = (1 to count).map(c => RestApi.builder().id(s"$c").name(s"Item $c").build())
 
     GetRestApisResponse.builder()
+      .items(items.asJava)
+      .build()
+  }
+
+  "getAwsUsagePlanIdByApiName" should {
+    "find id on first page of results" in new Setup {
+      val usagePlanId = UUID.randomUUID().toString
+      val applicationName = "foo"
+
+      when(mockApiGatewayClient.getUsagePlans(any[GetUsagePlansRequest])).thenReturn(buildMatchingUsagePlansResponse(usagePlanId, applicationName))
+
+      val returnedId = getAwsUsagePlanIdByApplicationName(applicationName)
+
+      returnedId shouldEqual Some(usagePlanId)
+    }
+
+    "find id when results are paged" in new Setup {
+      val usagePlanId = UUID.randomUUID().toString
+      val applicationName = "foo"
+
+      when(mockApiGatewayClient.getUsagePlans(any[GetUsagePlansRequest]))
+        .thenReturn(
+          buildNonMatchingUsagePlansResponse(Limit),
+          buildMatchingUsagePlansResponse(usagePlanId, applicationName))
+
+      val returnedId = getAwsUsagePlanIdByApplicationName(applicationName)
+
+      returnedId shouldEqual Some(usagePlanId)
+      verify(mockApiGatewayClient, times(2)).getUsagePlans(any[GetUsagePlansRequest])
+    }
+
+    "return None if application name is not found" in new Setup {
+      val applicationName = "foo"
+
+      when(mockApiGatewayClient.getUsagePlans(any[GetUsagePlansRequest])).thenReturn(GetUsagePlansResponse.builder().build())
+
+      val returnedId = getAwsUsagePlanIdByApplicationName(applicationName)
+
+      returnedId shouldEqual None
+    }
+  }
+
+  def buildMatchingUsagePlansResponse(matchingId: String, matchingName: String): GetUsagePlansResponse = {
+    GetUsagePlansResponse.builder()
+      .items(UsagePlan.builder().id(matchingId).name(matchingName).build())
+      .build()
+  }
+
+  def buildNonMatchingUsagePlansResponse(count: Int): GetUsagePlansResponse = {
+    val items = (1 to count).map(c => UsagePlan.builder().id(s"$c").name(s"Item $c").build())
+
+    GetUsagePlansResponse.builder()
       .items(items.asJava)
       .build()
   }
