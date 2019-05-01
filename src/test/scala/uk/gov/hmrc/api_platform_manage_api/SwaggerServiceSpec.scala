@@ -35,8 +35,8 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       "domain" -> "integration.tax.service.gov.uk",
       "vpc_link_id" -> "gix6s7",
       "office_ip_address" -> officeIpAddress,
-      "authorizerUri" -> "arn:aws:apigateway:authorizer",
-      "authorizerCredentials" -> "arn:aws:iam::account-id:foobar"
+      "authorizer_uri" -> "arn:aws:apigateway:authorizer",
+      "authorizer_credentials" -> "arn:aws:iam::account-id:foobar"
     )
 
     def swaggerJson(host: String = "api-example-microservice.protected.mdtp"): String =
@@ -125,6 +125,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |        "type": "apiKey",
           |        "name": "Authorization",
           |        "in": "header",
+          |        "x-amazon-apigateway-authtype": "custom",
           |        "x-amazon-apigateway-authorizer": {
           |            "type": "token",
           |            "authorizerUri": "arn:aws:apigateway:authorizer",
