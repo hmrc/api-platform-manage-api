@@ -83,9 +83,9 @@ class SwaggerService(environment: Map[String, String]) {
 
   private def securityDefinitions: Map[String, Object] = {
     Map("application-authorizer" ->
-      Map("type" -> "apiKey", "name" -> "Authorization", "in" -> "header", "x-amazon-apigateway-authorizer" ->
-        Map("type" -> "token", "authorizerUri" -> environment("authorizerUri"),
-          "authorizerCredentials" -> environment("authorizerCredentials"), "authorizerResultTtlInSeconds" -> "300")
+      Map("type" -> "apiKey", "name" -> "Authorization", "in" -> "header", "x-amazon-apigateway-authtype" -> "custom",
+        "x-amazon-apigateway-authorizer" -> Map("type" -> "token", "authorizerUri" -> environment("authorizer_uri"),
+          "authorizerCredentials" -> environment("authorizer_credentials"), "authorizerResultTtlInSeconds" -> "300")
       )
     )
   }
