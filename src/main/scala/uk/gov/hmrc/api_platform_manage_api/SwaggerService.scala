@@ -37,6 +37,7 @@ class SwaggerService(environment: Map[String, String]) {
       path._2.getOperationMap.asScala foreach { op =>
         op._2.setVendorExtension("x-amazon-apigateway-integration", amazonApigatewayIntegration(swagger.getHost, path._1, op))
         if (op._2.getVendorExtensions.getOrDefault("x-auth-type", "") == "Application & Application User") {
+          op._2.addSecurity("api-key", List())
           op._2.addSecurity("application-authorizer", List())
         }
       }
@@ -82,9 +83,10 @@ class SwaggerService(environment: Map[String, String]) {
   }
 
   private def securityDefinitions: Map[String, Object] = {
-    Map("application-authorizer" ->
-      Map("type" -> "apiKey", "name" -> "Authorization", "in" -> "header", "x-amazon-apigateway-authtype" -> "custom",
-        "x-amazon-apigateway-authorizer" -> Map("type" -> "token", "authorizerUri" -> environment("authorizer_uri"),
+    Map("api-key"-> Map("type" -> "apiKey", "name" -> "x-api-key", "in" -> "header"),
+      "application-authorizer" -> Map("type" -> "apiKey", "name" -> "Authorization", "in" -> "header",
+        "x-amazon-apigateway-authtype" -> "custom", "x-amazon-apigateway-authorizer" ->
+          Map("type" -> "token", "authorizerUri" -> environment("authorizer_uri"),
           "authorizerCredentials" -> environment("authorizer_credentials"), "authorizerResultTtlInSeconds" -> "300")
       )
     )

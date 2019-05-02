@@ -121,6 +121,11 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
     "add security definitions" in new StandardSetup {
       val expectedJson: String =
         """{
+          |    "api-key": {
+          |      "type": "apiKey",
+          |      "name": "x-api-key",
+          |      "in": "header"
+          |    },
           |    "application-authorizer": {
           |        "type": "apiKey",
           |        "name": "Authorization",
@@ -164,7 +169,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
 
       val paths = swagger.getPaths.asScala
       paths("/world").getGet.getSecurity shouldBe null
-      toJson(paths("/application").getGet.getSecurity) should matchJson("""[ {"application-authorizer" : [ ]} ]""")
+      toJson(paths("/application").getGet.getSecurity) should matchJson("""[{"api-key":[]}, {"application-authorizer":[]}]""")
     }
 
     "add amazon extension for API key source" in new StandardSetup {
