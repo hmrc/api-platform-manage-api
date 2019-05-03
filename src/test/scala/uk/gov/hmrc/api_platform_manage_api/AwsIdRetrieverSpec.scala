@@ -23,7 +23,7 @@ import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpecLike}
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient
-import software.amazon.awssdk.services.apigateway.model.{GetRestApisRequest, GetRestApisResponse, GetUsagePlansRequest, GetUsagePlansResponse, RestApi, UsagePlan}
+import software.amazon.awssdk.services.apigateway.model.{ApiKey, GetApiKeysRequest, GetApiKeysResponse, GetRestApisRequest, GetRestApisResponse, GetUsagePlansRequest, GetUsagePlansResponse, RestApi, UsagePlan}
 
 import scala.collection.JavaConverters._
 
@@ -88,7 +88,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
       .build()
   }
 
-  "getAwsUsagePlanIdByApiName" should {
+  "getAwsUsagePlanIdByApplicationName" should {
     "find id on first page of results" in new Setup {
       val usagePlanId = UUID.randomUUID().toString
       val applicationName = "foo"
@@ -136,6 +136,58 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
     val items = (1 to count).map(c => UsagePlan.builder().id(s"$c").name(s"Item $c").build())
 
     GetUsagePlansResponse.builder()
+      .items(items.asJava)
+      .build()
+  }
+
+  "getAwsApiKeyIdByApplicationName" should {
+    "find id on first page of results" in new Setup {
+      val apiKeyId = UUID.randomUUID().toString
+      val applicationName = "foo"
+
+      when(mockApiGatewayClient.getApiKeys(any[GetApiKeysRequest])).thenReturn(buildMatchingApiKeysResponse(apiKeyId, applicationName))
+
+      val returnedId = getAwsApiKeyIdByApplicationName(applicationName)
+
+      returnedId shouldEqual Some(apiKeyId)
+    }
+
+    "find id when results are paged" in new Setup {
+      val apiKeyId = UUID.randomUUID().toString
+      val applicationName = "foo"
+
+      when(mockApiGatewayClient.getApiKeys(any[GetApiKeysRequest]))
+        .thenReturn(
+          buildNonMatchingApiKeysResponse(Limit),
+          buildMatchingApiKeysResponse(apiKeyId, applicationName))
+
+      val returnedId = getAwsApiKeyIdByApplicationName(applicationName)
+
+      returnedId shouldEqual Some(apiKeyId)
+      verify(mockApiGatewayClient, times(2)).getApiKeys(any[GetApiKeysRequest])
+    }
+
+    "return None if application name is not found" in new Setup {
+      val applicationName = "foo"
+
+      when(mockApiGatewayClient.getApiKeys(any[GetApiKeysRequest])).thenReturn(GetApiKeysResponse.builder().build())
+
+      val returnedId = getAwsApiKeyIdByApplicationName(applicationName)
+
+      returnedId shouldEqual None
+    }
+  }
+
+  def buildMatchingApiKeysResponse(matchingId: String, matchingName: String): GetApiKeysResponse = {
+    GetApiKeysResponse.builder()
+      .items(ApiKey.builder().id(matchingId).name(matchingName).build())
+      .build()
+  }
+
+  def buildNonMatchingApiKeysResponse(count: Int): GetApiKeysResponse = {
+    val items = (1 to count).map(c => ApiKey.builder().id(s"$c").name(s"Item $c").build())
+
+    GetApiKeysResponse.builder()
       .items(items.asJava)
       .build()
   }

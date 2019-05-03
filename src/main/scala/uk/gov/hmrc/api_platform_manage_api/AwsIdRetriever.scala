@@ -17,7 +17,7 @@
 package uk.gov.hmrc.api_platform_manage_api
 
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient
-import software.amazon.awssdk.services.apigateway.model.{GetRestApisRequest, GetRestApisResponse, GetUsagePlansRequest}
+import software.amazon.awssdk.services.apigateway.model.{GetApiKeysRequest, GetRestApisRequest, GetRestApisResponse, GetUsagePlansRequest}
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
@@ -69,5 +69,24 @@ trait AwsIdRetriever {
     }
   }
 
+  def getAwsApiKeyIdByApplicationName(applicationName: String): Option[String] = {
+    findAwsApiKeyId(applicationName, None)
+  }
 
+  @tailrec
+  private def findAwsApiKeyId(applicationName: String, position: Option[String]): Option[String] = {
+    def buildGetApiKeysRequest(position: Option[String]): GetApiKeysRequest = {
+      position match {
+        case Some(p) => GetApiKeysRequest.builder().limit(Limit).position(p).build()
+        case None => GetApiKeysRequest.builder().limit(Limit).build()
+      }
+    }
+
+    val response = apiGatewayClient.getApiKeys(buildGetApiKeysRequest(position))
+
+    response.items().asScala.find(apiKey => apiKey.name == applicationName) match {
+      case Some(apiKey) => Some(apiKey.id)
+      case _ => if (response.items.size < Limit) None else findAwsApiKeyId(applicationName, Some(response.position))
+    }
+  }
 }
