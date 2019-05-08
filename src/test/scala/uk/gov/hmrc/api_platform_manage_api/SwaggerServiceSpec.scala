@@ -97,17 +97,31 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       val expectedJson: String =
         """{
           |  "MISSING_AUTHENTICATION_TOKEN":{
-          |    "statusCode":"404",
+          |    "statusCode": "404",
           |    "responseTemplates":{
-          |      "application/vnd.hmrc.1.0+json":"{\"code\": \"MATCHING_RESOURCE_NOT_FOUND\", \"message\": \"A resource with the name in the request can not be found in the API\"}",
-          |      "application/vnd.hmrc.1.0+xml":"<errorResponse><code>MATCHING_RESOURCE_NOT_FOUND</code><message>A resource with the name in the request can not be found in the API</message></errorResponse>"
+          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"MATCHING_RESOURCE_NOT_FOUND\", \"message\": \"A resource with the name in the request can not be found in the API\"}",
+          |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>MATCHING_RESOURCE_NOT_FOUND</code><message>A resource with the name in the request can not be found in the API</message></errorResponse>"
           |    }
           |  },
           |  "THROTTLED":{
-          |    "statusCode":"429",
+          |    "statusCode": "429",
           |    "responseTemplates":{
-          |      "application/vnd.hmrc.1.0+json":"{\"code\": \"MESSAGE_THROTTLED_OUT\", \"message\", \"The request for the API is throttled as you have exceeded your quota.\"}",
-          |      "application/vnd.hmrc.1.0+xml":"<errorResponse><code>MESSAGE_THROTTLED_OUT</code><message>The request for the API is throttled as you have exceeded your quota.</message></errorResponse>"
+          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"MESSAGE_THROTTLED_OUT\", \"message\", \"The request for the API is throttled as you have exceeded your quota.\"}",
+          |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>MESSAGE_THROTTLED_OUT</code><message>The request for the API is throttled as you have exceeded your quota.</message></errorResponse>"
+          |    }
+          |  },
+          |  "UNAUTHORIZED": {
+          |    "statusCode": "401",
+          |    "responseTemplates": {
+          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"MISSING_CREDENTIALS\", \"message\": \"Authentication information is not provided\"}",
+          |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>MISSING_CREDENTIALS</code><message>Authentication information is not provided</message></errorResponse>"
+          |    }
+          |  },
+          |  "INVALID_API_KEY": {
+          |    "statusCode": "401",
+          |    "responseTemplates": {
+          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"INVALID_CREDENTIALS\", \"message\": \"Invalid Authentication information provided\"}",
+          |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>"
           |    }
           |  }
           |}""".stripMargin
