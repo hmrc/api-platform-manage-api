@@ -18,6 +18,7 @@ package uk.gov.hmrc.api_platform_manage_api
 
 import java.util.UUID
 
+import com.amazonaws.services.lambda.runtime.LambdaLogger
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.mockito.MockitoSugar
@@ -31,6 +32,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
 
   trait Setup extends AwsIdRetriever {
     val mockApiGatewayClient = mock[ApiGatewayClient]
+    val mockLambdaLogger = mock[LambdaLogger]
 
     override val apiGatewayClient = mockApiGatewayClient
     override val Limit = 2
@@ -43,7 +45,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
 
       when(mockApiGatewayClient.getRestApis(any[GetRestApisRequest])).thenReturn(buildMatchingRestApisResponse(apiId, apiName))
 
-      val returnedId = getAwsRestApiIdByApiName(apiName)
+      val returnedId = getAwsRestApiIdByApiName(apiName, mockLambdaLogger)
 
       returnedId shouldEqual Some(apiId)
     }
@@ -57,7 +59,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
           buildNonMatchingRestApisResponse(Limit),
           buildMatchingRestApisResponse(apiId, apiName))
 
-      val returnedId = getAwsRestApiIdByApiName(apiName)
+      val returnedId = getAwsRestApiIdByApiName(apiName, mockLambdaLogger)
 
       returnedId shouldEqual Some(apiId)
       verify(mockApiGatewayClient, times(2)).getRestApis(any[GetRestApisRequest])
@@ -68,7 +70,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
 
       when(mockApiGatewayClient.getRestApis(any[GetRestApisRequest])).thenReturn(GetRestApisResponse.builder().build())
 
-      val returnedId = getAwsRestApiIdByApiName(apiName)
+      val returnedId = getAwsRestApiIdByApiName(apiName, mockLambdaLogger)
 
       returnedId shouldEqual None
     }
