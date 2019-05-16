@@ -87,6 +87,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
 
     GetRestApisResponse.builder()
       .items(items.asJava)
+      .position(UUID.randomUUID().toString)
       .build()
   }
 
