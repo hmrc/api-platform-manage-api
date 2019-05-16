@@ -31,10 +31,10 @@ import scala.collection.JavaConverters._
 class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
 
   trait Setup extends AwsIdRetriever {
-    val mockApiGatewayClient = mock[ApiGatewayClient]
-    val mockLambdaLogger = mock[LambdaLogger]
+    val mockApiGatewayClient: ApiGatewayClient = mock[ApiGatewayClient]
+    val mockLambdaLogger: LambdaLogger = mock[LambdaLogger]
 
-    override val apiGatewayClient = mockApiGatewayClient
+    override val apiGatewayClient: ApiGatewayClient = mockApiGatewayClient
     override val Limit = 2
   }
 
@@ -140,6 +140,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
 
     GetUsagePlansResponse.builder()
       .items(items.asJava)
+      .position(UUID.randomUUID().toString)
       .build()
   }
 
@@ -192,6 +193,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
 
     GetApiKeysResponse.builder()
       .items(items.asJava)
+      .position(UUID.randomUUID().toString)
       .build()
   }
 }

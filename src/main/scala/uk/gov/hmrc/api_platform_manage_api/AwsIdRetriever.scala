@@ -68,7 +68,7 @@ trait AwsIdRetriever {
 
     response.items().asScala.find(usagePlan => usagePlan.name == applicationName) match {
       case Some(usagePlan) => Some(usagePlan.id)
-      case _ => if (response.items.size < Limit) None else findAwsUsagePlanId(applicationName, Some(response.position))
+      case _ => if (response.position == null) None else findAwsUsagePlanId(applicationName, Some(response.position))
     }
   }
 
@@ -89,7 +89,7 @@ trait AwsIdRetriever {
 
     response.items().asScala.find(apiKey => apiKey.name == applicationName) match {
       case Some(apiKey) => Some(apiKey.id)
-      case _ => if (response.items.size < Limit) None else findAwsApiKeyId(applicationName, Some(response.position))
+      case _ => if (response.position == null) None else findAwsApiKeyId(applicationName, Some(response.position))
     }
   }
 }
