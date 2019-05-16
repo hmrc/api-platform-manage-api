@@ -47,7 +47,7 @@ trait AwsIdRetriever {
 
     response.items().asScala.find(restApi => restApi.name == apiName) match {
       case Some(restApi) => Some(restApi.id)
-      case _ => if (response.items.size < Limit) None else findAwsRestApiId(apiName, Some(response.position), logger)
+      case _ => if (response.position == null) None else findAwsRestApiId(apiName, Some(response.position), logger)
     }
   }
 
