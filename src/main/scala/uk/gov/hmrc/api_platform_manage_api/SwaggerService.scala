@@ -53,6 +53,7 @@ class SwaggerService(environment: Map[String, String]) {
       case Some(serviceNameMatch) =>
         Map("uri" -> s"https://${serviceNameMatch.group(1)}.${environment("domain")}$path",
           "responses" -> Map("default" -> Map("statusCode" -> "200")),
+          "requestParameters" -> Map("integration.request.header.x-application-id" -> "context.authorizer.applicationId"),
           "passthroughBehavior" -> "when_no_match",
           "connectionType" -> "VPC_LINK",
           "connectionId" -> environment("vpc_link_id"),

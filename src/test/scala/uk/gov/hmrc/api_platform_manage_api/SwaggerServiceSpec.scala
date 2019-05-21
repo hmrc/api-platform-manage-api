@@ -179,6 +179,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
               ve("uri") shouldEqual s"https://api-example-microservice.integration.tax.service.gov.uk${path._1}"
               ve("connectionId") shouldEqual environment("vpc_link_id")
               ve("httpMethod") shouldEqual "GET"
+              ve("requestParameters") shouldEqual Map("integration.request.header.x-application-id" -> "context.authorizer.applicationId")
             case _ => throw new ClassCastException
           }
         }
