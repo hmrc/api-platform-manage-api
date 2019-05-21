@@ -18,13 +18,12 @@ package uk.gov.hmrc.api_platform_manage_api
 
 import java.util.UUID
 
-import com.amazonaws.services.lambda.runtime.LambdaLogger
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpecLike}
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient
-import software.amazon.awssdk.services.apigateway.model.{ApiKey, GetApiKeysRequest, GetApiKeysResponse, GetRestApisRequest, GetRestApisResponse, GetUsagePlansRequest, GetUsagePlansResponse, RestApi, UsagePlan}
+import software.amazon.awssdk.services.apigateway.model._
 
 import scala.collection.JavaConverters._
 
@@ -32,7 +31,6 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
 
   trait Setup extends AwsIdRetriever {
     val mockApiGatewayClient: ApiGatewayClient = mock[ApiGatewayClient]
-    val mockLambdaLogger: LambdaLogger = mock[LambdaLogger]
 
     override val apiGatewayClient: ApiGatewayClient = mockApiGatewayClient
     override val Limit = 2
@@ -45,7 +43,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
 
       when(mockApiGatewayClient.getRestApis(any[GetRestApisRequest])).thenReturn(buildMatchingRestApisResponse(apiId, apiName))
 
-      val returnedId = getAwsRestApiIdByApiName(apiName, mockLambdaLogger)
+      val returnedId = getAwsRestApiIdByApiName(apiName)
 
       returnedId shouldEqual Some(apiId)
     }
@@ -59,7 +57,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
           buildNonMatchingRestApisResponse(Limit),
           buildMatchingRestApisResponse(apiId, apiName))
 
-      val returnedId = getAwsRestApiIdByApiName(apiName, mockLambdaLogger)
+      val returnedId = getAwsRestApiIdByApiName(apiName)
 
       returnedId shouldEqual Some(apiId)
       verify(mockApiGatewayClient, times(2)).getRestApis(any[GetRestApisRequest])
@@ -70,7 +68,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
 
       when(mockApiGatewayClient.getRestApis(any[GetRestApisRequest])).thenReturn(GetRestApisResponse.builder().build())
 
-      val returnedId = getAwsRestApiIdByApiName(apiName, mockLambdaLogger)
+      val returnedId = getAwsRestApiIdByApiName(apiName)
 
       returnedId shouldEqual None
     }

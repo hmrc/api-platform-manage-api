@@ -84,7 +84,10 @@ class SwaggerService(environment: Map[String, String]) {
             s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MISSING_CREDENTIALS</code><message>Authentication information is not provided</message></errorResponse>")),
       "INVALID_API_KEY" -> Map("statusCode" -> "401", "responseTemplates" ->
         Map(s"application/vnd.hmrc.$version+json" -> """{"code": "INVALID_CREDENTIALS", "message": "Invalid Authentication information provided"}""",
-            s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>"))
+            s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>")),
+      "ACCESS_DENIED" -> Map("statusCode" -> "403", "responseTemplates" ->
+        Map(s"application/vnd.hmrc.$version+json" -> """{"code": "RESOURCE_FORBIDDEN", "message": "The application is blocked"}""",
+          s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>RESOURCE_FORBIDDEN</code><message>The application is blocked</message></errorResponse>"))
     )
   }
 
