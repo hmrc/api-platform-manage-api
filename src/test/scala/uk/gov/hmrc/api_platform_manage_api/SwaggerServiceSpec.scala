@@ -123,6 +123,13 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |      "application/vnd.hmrc.1.0+json": "{\"code\": \"INVALID_CREDENTIALS\", \"message\": \"Invalid Authentication information provided\"}",
           |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>"
           |    }
+          |  },
+          |  "ACCESS_DENIED": {
+          |    "statusCode": "403",
+          |    "responseTemplates": {
+          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"RESOURCE_FORBIDDEN\", \"message\": \"The application is blocked\"}",
+          |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>RESOURCE_FORBIDDEN</code><message>The application is blocked</message></errorResponse>"
+          |    }
           |  }
           |}""".stripMargin
 
