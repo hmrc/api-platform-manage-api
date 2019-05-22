@@ -45,7 +45,14 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |"x-auth-type": "Application & Application User", "x-throttling-tier": "Unlimited"}},
           |"/world": {"get": {"responses": {"200": {"description": "OK"}},
           |"x-auth-type": "None", "x-throttling-tier": "Unlimited"}}},
-          |"info": {"title": "Test OpenAPI 2","version": "1.0"}, "swagger": "2.0"}""".stripMargin
+          |"info": {"title": "Test OpenAPI","version": "1.0"}, "swagger": "2.0"}""".stripMargin
+
+    def swaggerJsonWithPathParameters(host: String = "api-example-microservice.protected.mdtp"): String =
+      s"""{"host": "$host", "paths": {
+         |"/{givenName}": {"get": {"parameters": [{"name": "givenName","required": true,"in": "path","type": "string"}],
+         |"responses": {"200": {"description": "OK"}},
+         |"x-auth-type": "None", "x-throttling-tier": "Unlimited"}}},
+         |"info": {"title": "Test OpenAPI","version": "1.0"}, "swagger": "2.0"}""".stripMargin
   }
 
   trait StandardSetup extends Setup {
@@ -183,6 +190,18 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
             case _ => throw new ClassCastException
           }
         }
+      }
+    }
+
+    "add path parameters to the request parameters in the API gateway integration extension" in new StandardSetup {
+      val swagger: Swagger = swaggerService.createSwagger(swaggerJsonWithPathParameters())
+
+       swagger.getPaths.asScala.head._2.getOperations.asScala.head.getVendorExtensions.asScala("x-amazon-apigateway-integration") match {
+        case ve: Map[String, Object] =>
+          ve("requestParameters") shouldEqual Map(
+            "integration.request.header.x-application-id" -> "context.authorizer.applicationId",
+            "integration.request.path.givenName" -> "method.request.path.givenName")
+        case _ => throw new ClassCastException
       }
     }
 
