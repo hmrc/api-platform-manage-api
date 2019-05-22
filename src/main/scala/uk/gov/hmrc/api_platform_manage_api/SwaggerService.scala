@@ -49,11 +49,17 @@ class SwaggerService(environment: Map[String, String]) {
   }
 
   private def amazonApigatewayIntegration(host: String, path: String, operation: (HttpMethod, Operation)): Map[String, Object] = {
+    val requestParameters: Seq[(String, String)] =
+      ("integration.request.header.x-application-id" -> "context.authorizer.applicationId") +:
+        operation._2.getParameters.asScala
+          .filter(p => p.getIn == "path")
+          .map(p => s"integration.request.path.${p.getName}" -> s"method.request.path.${p.getName}")
+
     serviceNameRegex.findFirstMatchIn(host) match {
       case Some(serviceNameMatch) =>
         Map("uri" -> s"https://${serviceNameMatch.group(1)}.${environment("domain")}$path",
           "responses" -> Map("default" -> Map("statusCode" -> "200")),
-          "requestParameters" -> Map("integration.request.header.x-application-id" -> "context.authorizer.applicationId"),
+          "requestParameters" -> requestParameters.toMap,
           "passthroughBehavior" -> "when_no_match",
           "connectionType" -> "VPC_LINK",
           "connectionId" -> environment("vpc_link_id"),
