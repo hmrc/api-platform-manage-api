@@ -35,7 +35,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       "domain" -> "integration.tax.service.gov.uk",
       "vpc_link_id" -> "gix6s7",
       "office_ip_address" -> officeIpAddress,
-      "authorizer_uri" -> "arn:aws:apigateway:authorizer",
+      "application_authorizer_uri" -> "arn:aws:apigateway:application_authorizer",
       "authorizer_credentials" -> "arn:aws:iam::account-id:foobar"
     )
 
