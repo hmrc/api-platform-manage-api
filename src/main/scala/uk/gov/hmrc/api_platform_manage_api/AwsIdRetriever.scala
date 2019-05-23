@@ -25,7 +25,7 @@ import scala.collection.JavaConverters._
 trait AwsIdRetriever {
 
   val apiGatewayClient: ApiGatewayClient
-  val Limit: Int = 100
+  val Limit: Int = 500
 
   def getAwsRestApiIdByApiName(apiName: String): Option[String] = {
     findAwsRestApiId(apiName, None)
