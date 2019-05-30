@@ -16,22 +16,24 @@
 
 package uk.gov.hmrc.api_platform_manage_api
 
+import scala.collection.JavaConverters.mapAsJavaMapConverter
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient
 import software.amazon.awssdk.services.apigateway.model.Op.REPLACE
 import software.amazon.awssdk.services.apigateway.model.{CreateDeploymentRequest, PatchOperation, UpdateStageRequest}
 
 class DeploymentService(apiGatewayClient: ApiGatewayClient) {
 
-  def deployApi(restApiId: String): Unit = {
-    apiGatewayClient.createDeployment(buildCreateDeploymentRequest(restApiId))
+  def deployApi(restApiId: String, context: String, version: String): Unit = {
+    apiGatewayClient.createDeployment(buildCreateDeploymentRequest(restApiId, context, version))
     apiGatewayClient.updateStage(buildUpdateStageRequest(restApiId))
   }
 
-  private def buildCreateDeploymentRequest(restApiId: String): CreateDeploymentRequest = {
+  private def buildCreateDeploymentRequest(restApiId: String, context: String, version: String): CreateDeploymentRequest = {
     CreateDeploymentRequest
       .builder()
       .restApiId(restApiId)
       .stageName("current")
+      .variables(Map("context" -> context, "version" -> version).asJava)
       .build()
   }
 

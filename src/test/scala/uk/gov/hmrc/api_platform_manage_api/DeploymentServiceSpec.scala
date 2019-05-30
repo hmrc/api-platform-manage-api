@@ -32,6 +32,8 @@ import scala.collection.JavaConverters._
 class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar {
 
   trait Setup {
+    val context: String = "context"
+    val version: String = "version"
     val mockAPIGatewayClient: ApiGatewayClient = mock[ApiGatewayClient]
     val deploymentService = new DeploymentService(mockAPIGatewayClient)
   }
@@ -42,11 +44,14 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
       val createDeploymentRequestCaptor: ArgumentCaptor[CreateDeploymentRequest] = ArgumentCaptor.forClass(classOf[CreateDeploymentRequest])
       when(mockAPIGatewayClient.createDeployment(createDeploymentRequestCaptor.capture())).thenReturn(CreateDeploymentResponse.builder().build())
 
-      deploymentService.deployApi(importedRestApiId)
+      deploymentService.deployApi(importedRestApiId, context, version)
 
       val capturedRequest: CreateDeploymentRequest = createDeploymentRequestCaptor.getValue
       capturedRequest.restApiId shouldEqual importedRestApiId
       capturedRequest.stageName shouldEqual "current"
+      var stageVars = capturedRequest.variables.asScala.toStream
+      stageVars should contain("context" -> context)
+      stageVars should contain("version" -> version)
     }
 
     "correctly handle UnauthorizedException thrown by AWS SDK when deploying API" in new Setup {
@@ -54,7 +59,7 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
       when(mockAPIGatewayClient.createDeployment(any[CreateDeploymentRequest])).thenThrow(UnauthorizedException.builder().message(errorMessage).build())
 
       val ex: Exception = intercept[Exception]{
-        deploymentService.deployApi("123")
+        deploymentService.deployApi("123", context, version)
       }
 
       ex.getMessage shouldEqual errorMessage
@@ -66,7 +71,7 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
       val updateStageRequestCaptor: ArgumentCaptor[UpdateStageRequest] = ArgumentCaptor.forClass(classOf[UpdateStageRequest])
       when(mockAPIGatewayClient.updateStage(updateStageRequestCaptor.capture())).thenReturn(UpdateStageResponse.builder().build())
 
-      deploymentService.deployApi(importedRestApiId)
+      deploymentService.deployApi(importedRestApiId, context, version)
 
       val capturedRequest: UpdateStageRequest = updateStageRequestCaptor.getValue
       capturedRequest.restApiId shouldEqual importedRestApiId
@@ -81,7 +86,7 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
       when(mockAPIGatewayClient.updateStage(any[UpdateStageRequest])).thenThrow(UnauthorizedException.builder().message(errorMessage).build())
 
       val ex: Exception = intercept[Exception]{
-        deploymentService.deployApi("123")
+        deploymentService.deployApi("123", context, version)
       }
 
       ex.getMessage shouldEqual errorMessage
