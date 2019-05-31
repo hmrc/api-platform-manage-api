@@ -36,6 +36,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       "vpc_link_id" -> "gix6s7",
       "office_ip_address" -> officeIpAddress,
       "application_authorizer_uri" -> "arn:aws:apigateway:application_authorizer",
+      "user_authorizer_uri" -> "arn:aws:apigateway:user_authorizer",
       "authorizer_credentials" -> "arn:aws:iam::account-id:foobar"
     )
 
@@ -43,6 +44,8 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       s"""{"host": "$host", "paths": {
           |"/application": {"get": {"responses": {"200": {"description": "OK"}},
           |"x-auth-type": "Application & Application User", "x-throttling-tier": "Unlimited"}},
+          |"/user": {"get": {"responses": {"200": {"description": "OK"}},
+          |"x-auth-type": "Application User", "x-throttling-tier": "Unlimited"}},
           |"/world": {"get": {"responses": {"200": {"description": "OK"}},
           |"x-auth-type": "None", "x-throttling-tier": "Unlimited"}}},
           |"info": {"title": "Test OpenAPI","version": "1.0"}, "swagger": "2.0"}""".stripMargin
@@ -165,6 +168,19 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
           |            "authorizerResultTtlInSeconds": "300"
           |        }
+          |    },
+          |    "user-authorizer": {
+          |        "type": "apiKey",
+          |        "name": "Authorization",
+          |        "in": "header",
+          |        "x-amazon-apigateway-authtype": "custom",
+          |        "x-amazon-apigateway-authorizer": {
+          |            "authorizerUri": "arn:aws:apigateway:user_authorizer",
+          |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
+          |            "authorizerResultTtlInSeconds": "300",
+          |            "identitySource": "method.request.header.Authorization",
+          |            "type": "request"
+          |        }
           |    }
           |}""".stripMargin
 
@@ -211,6 +227,14 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       val paths = swagger.getPaths.asScala
       paths("/world").getGet.getSecurity shouldBe null
       toJson(paths("/application").getGet.getSecurity) should matchJson("""[{"api-key":[]}, {"application-authorizer":[]}]""")
+    }
+
+    "add the user authorizer to the user restricted endpoints only" in new StandardSetup {
+      val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
+
+      val paths = swagger.getPaths.asScala
+      paths("/world").getGet.getSecurity shouldBe null
+      toJson(paths("/user").getGet.getSecurity) should matchJson("""[{"user-authorizer":[]}]""")
     }
 
     "add amazon extension for API key source" in new StandardSetup {
