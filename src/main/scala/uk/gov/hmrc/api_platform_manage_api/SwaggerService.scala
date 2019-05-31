@@ -40,6 +40,9 @@ class SwaggerService(environment: Map[String, String]) {
           op._2.addSecurity("api-key", List())
           op._2.addSecurity("application-authorizer", List())
         }
+        if (op._2.getVendorExtensions.getOrDefault("x-auth-type", "") == "Application User") {
+          op._2.addSecurity("user-authorizer", List())
+        }
       }
     }
     swagger.vendorExtension("x-amazon-apigateway-policy", amazonApigatewayPolicy)
