@@ -99,12 +99,32 @@ class SwaggerService(environment: Map[String, String]) {
   }
 
   private def securityDefinitions: Map[String, Object] = {
+    val appAuthorizer = Map(
+      "type" -> "apiKey",
+      "name" -> "Authorization",
+      "in" -> "header",
+      "x-amazon-apigateway-authtype" -> "custom",
+      "x-amazon-apigateway-authorizer" -> Map(
+        "type" -> "token",
+        "authorizerUri" -> environment("application_authorizer_uri"),
+        "authorizerCredentials" -> environment("authorizer_credentials"),
+        "authorizerResultTtlInSeconds" -> "300"))
+
+    val userAuthorizer = Map(
+      "type" -> "apiKey",
+      "name" -> "Authorization",
+      "in" -> "header",
+      "x-amazon-apigateway-authtype" -> "custom",
+      "x-amazon-apigateway-authorizer" -> Map(
+        "type" -> "request",
+        "authorizerUri" -> environment("user_authorizer_uri"),
+        "authorizerCredentials" -> environment("authorizer_credentials"),
+        "authorizerResultTtlInSeconds" -> "300",
+        "identitySource" -> "method.request.header.Authorization"))
+
     Map("api-key"-> Map("type" -> "apiKey", "name" -> "x-api-key", "in" -> "header"),
-      "application-authorizer" -> Map("type" -> "apiKey", "name" -> "Authorization", "in" -> "header",
-        "x-amazon-apigateway-authtype" -> "custom", "x-amazon-apigateway-authorizer" ->
-          Map("type" -> "token", "authorizerUri" -> environment("application_authorizer_uri"),
-          "authorizerCredentials" -> environment("authorizer_credentials"), "authorizerResultTtlInSeconds" -> "300")
-      )
+        "application-authorizer" -> appAuthorizer,
+        "user-authorizer" -> userAuthorizer
     )
   }
 }

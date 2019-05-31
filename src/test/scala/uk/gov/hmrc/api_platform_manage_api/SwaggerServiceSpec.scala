@@ -36,6 +36,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       "vpc_link_id" -> "gix6s7",
       "office_ip_address" -> officeIpAddress,
       "application_authorizer_uri" -> "arn:aws:apigateway:application_authorizer",
+      "user_authorizer_uri" -> "arn:aws:apigateway:user_authorizer",
       "authorizer_credentials" -> "arn:aws:iam::account-id:foobar"
     )
 
@@ -164,6 +165,19 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |            "authorizerUri": "arn:aws:apigateway:application_authorizer",
           |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
           |            "authorizerResultTtlInSeconds": "300"
+          |        }
+          |    },
+          |    "user-authorizer": {
+          |        "type": "apiKey",
+          |        "name": "Authorization",
+          |        "in": "header",
+          |        "x-amazon-apigateway-authtype": "custom",
+          |        "x-amazon-apigateway-authorizer": {
+          |            "authorizerUri": "arn:aws:apigateway:user_authorizer",
+          |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
+          |            "authorizerResultTtlInSeconds": "300",
+          |            "identitySource": "method.request.header.Authorization",
+          |            "type": "request"
           |        }
           |    }
           |}""".stripMargin
