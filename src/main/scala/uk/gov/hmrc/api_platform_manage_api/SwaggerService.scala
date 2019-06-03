@@ -36,12 +36,13 @@ class SwaggerService(environment: Map[String, String]) {
     swagger.getPaths.asScala foreach { path =>
       path._2.getOperationMap.asScala foreach { op =>
         op._2.setVendorExtension("x-amazon-apigateway-integration", amazonApigatewayIntegration(swagger.getHost, path._1, op))
-        if (op._2.getVendorExtensions.getOrDefault("x-auth-type", "") == "Application & Application User") {
-          op._2.addSecurity("api-key", List())
-          op._2.addSecurity("application-authorizer", List())
-        }
-        if (op._2.getVendorExtensions.getOrDefault("x-auth-type", "") == "Application User") {
-          op._2.addSecurity("user-authorizer", List())
+
+        op._2.getVendorExtensions.getOrDefault("x-auth-type", "") match {
+          case "Application & Application User" =>
+            op._2.addSecurity("api-key", List())
+            op._2.addSecurity("application-authorizer", List())
+          case "Application User" => op._2.addSecurity("user-authorizer", List())
+          case "None" => op._2.addSecurity("open-authorizer", List())
         }
       }
     }
@@ -125,9 +126,22 @@ class SwaggerService(environment: Map[String, String]) {
         "authorizerResultTtlInSeconds" -> "300",
         "identitySource" -> "method.request.header.Authorization"))
 
+    val openAuthorizer = Map(
+      "type" -> "apiKey",
+      "name" -> "Unused",
+      "in" -> "header",
+      "x-amazon-apigateway-authtype" -> "custom",
+      "x-amazon-apigateway-authorizer" -> Map(
+        "type" -> "request",
+        "authorizerUri" -> environment("open_authorizer_uri"),
+        "authorizerCredentials" -> environment("authorizer_credentials"),
+        "authorizerResultTtlInSeconds" -> "300",
+        "identitySource" -> "method.request.httpMethod, method.request.path"))
+
     Map("api-key"-> Map("type" -> "apiKey", "name" -> "x-api-key", "in" -> "header"),
         "application-authorizer" -> appAuthorizer,
-        "user-authorizer" -> userAuthorizer
+        "user-authorizer" -> userAuthorizer,
+        "open-authorizer" -> openAuthorizer
     )
   }
 }
