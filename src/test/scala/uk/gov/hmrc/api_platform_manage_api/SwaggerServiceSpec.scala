@@ -37,6 +37,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       "office_ip_address" -> officeIpAddress,
       "application_authorizer_uri" -> "arn:aws:apigateway:application_authorizer",
       "user_authorizer_uri" -> "arn:aws:apigateway:user_authorizer",
+      "open_authorizer_uri" -> "arn:aws:apigateway:open_authorizer",
       "authorizer_credentials" -> "arn:aws:iam::account-id:foobar"
     )
 
@@ -181,6 +182,19 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |            "identitySource": "method.request.header.Authorization",
           |            "type": "request"
           |        }
+          |    },
+          |    "open-authorizer": {
+          |        "type": "apiKey",
+          |        "name": "Unused",
+          |        "in": "header",
+          |        "x-amazon-apigateway-authtype": "custom",
+          |        "x-amazon-apigateway-authorizer": {
+          |            "authorizerUri": "arn:aws:apigateway:open_authorizer",
+          |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
+          |            "authorizerResultTtlInSeconds": "300",
+          |            "identitySource": "method.request.httpMethod, method.request.path",
+          |            "type": "request"
+          |        }
           |    }
           |}""".stripMargin
 
@@ -221,19 +235,13 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       }
     }
 
-    "add the application authorizer to the application restricted endpoints only" in new StandardSetup {
+    "add the correct authorizers to each endpoint" in new StandardSetup {
       val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
 
-      val paths = swagger.getPaths.asScala
-      paths("/world").getGet.getSecurity shouldBe null
+      private val paths = swagger.getPaths.asScala
+
+      toJson(paths("/world").getGet.getSecurity) should matchJson("""[{"open-authorizer":[]}]""")
       toJson(paths("/application").getGet.getSecurity) should matchJson("""[{"api-key":[]}, {"application-authorizer":[]}]""")
-    }
-
-    "add the user authorizer to the user restricted endpoints only" in new StandardSetup {
-      val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
-
-      val paths = swagger.getPaths.asScala
-      paths("/world").getGet.getSecurity shouldBe null
       toJson(paths("/user").getGet.getSecurity) should matchJson("""[{"user-authorizer":[]}]""")
     }
 
