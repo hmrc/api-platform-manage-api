@@ -107,13 +107,6 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
     "add amazon extension for API gateway responses" in new StandardSetup {
       val expectedJson: String =
         """{
-          |  "MISSING_AUTHENTICATION_TOKEN":{
-          |    "statusCode": "404",
-          |    "responseTemplates":{
-          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"MATCHING_RESOURCE_NOT_FOUND\", \"message\": \"A resource with the name in the request can not be found in the API\"}",
-          |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>MATCHING_RESOURCE_NOT_FOUND</code><message>A resource with the name in the request can not be found in the API</message></errorResponse>"
-          |    }
-          |  },
           |  "THROTTLED":{
           |    "statusCode": "429",
           |    "responseTemplates":{
