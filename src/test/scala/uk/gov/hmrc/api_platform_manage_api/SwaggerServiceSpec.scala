@@ -224,7 +224,11 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
               ve("uri") shouldEqual s"https://api-example-microservice.integration.tax.service.gov.uk${path._1}"
               ve("connectionId") shouldEqual environment("vpc_link_id")
               ve("httpMethod") shouldEqual "GET"
-              ve("requestParameters") shouldEqual Map("integration.request.header.x-application-id" -> "context.authorizer.applicationId")
+              ve("requestParameters") shouldEqual Map(
+                "integration.request.header.x-application-id" -> "context.authorizer.applicationId",
+                "integration.request.header.Authorization" -> "context.authorizer.authBearerToken",
+                "integration.request.header.X-Client-Authorization-Token" -> "context.authorizer.clientAuthToken",
+                "integration.request.header.X-Client-Id" -> "context.authorizer.clientId")
             case _ => throw new ClassCastException
           }
         }
@@ -238,6 +242,9 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
         case ve: Map[String, Object] =>
           ve("requestParameters") shouldEqual Map(
             "integration.request.header.x-application-id" -> "context.authorizer.applicationId",
+            "integration.request.header.Authorization" -> "context.authorizer.authBearerToken",
+            "integration.request.header.X-Client-Authorization-Token" -> "context.authorizer.clientAuthToken",
+            "integration.request.header.X-Client-Id" -> "context.authorizer.clientId",
             "integration.request.path.givenName" -> "method.request.path.givenName")
         case _ => throw new ClassCastException
       }

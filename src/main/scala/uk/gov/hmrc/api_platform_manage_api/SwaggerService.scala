@@ -54,7 +54,10 @@ class SwaggerService(environment: Map[String, String]) {
 
   private def amazonApigatewayIntegration(host: String, path: String, operation: (HttpMethod, Operation)): Map[String, Object] = {
     val requestParameters: Seq[(String, String)] =
-      ("integration.request.header.x-application-id" -> "context.authorizer.applicationId") +:
+      Seq("integration.request.header.x-application-id" -> "context.authorizer.applicationId",
+        "integration.request.header.Authorization" -> "context.authorizer.authBearerToken",
+        "integration.request.header.X-Client-Authorization-Token" -> "context.authorizer.clientAuthToken",
+        "integration.request.header.X-Client-Id" -> "context.authorizer.clientId") ++:
         operation._2.getParameters.asScala
           .filter(p => p.getIn == "path")
           .map(p => s"integration.request.path.${p.getName}" -> s"method.request.path.${p.getName}")
