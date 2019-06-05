@@ -107,13 +107,6 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
     "add amazon extension for API gateway responses" in new StandardSetup {
       val expectedJson: String =
         """{
-          |  "MISSING_AUTHENTICATION_TOKEN":{
-          |    "statusCode": "404",
-          |    "responseTemplates":{
-          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"MATCHING_RESOURCE_NOT_FOUND\", \"message\": \"A resource with the name in the request can not be found in the API\"}",
-          |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>MATCHING_RESOURCE_NOT_FOUND</code><message>A resource with the name in the request can not be found in the API</message></errorResponse>"
-          |    }
-          |  },
           |  "THROTTLED":{
           |    "statusCode": "429",
           |    "responseTemplates":{
@@ -130,6 +123,9 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |  },
           |  "INVALID_API_KEY": {
           |    "statusCode": "401",
+          |    "responseParameters": {
+          |      "gatewayresponse.header.www-authenticate": "'Bearer realm=\"HMRC API Platform\"'"
+          |    },
           |    "responseTemplates": {
           |      "application/vnd.hmrc.1.0+json": "{\"code\": \"INVALID_CREDENTIALS\", \"message\": \"Invalid Authentication information provided\"}",
           |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>"
@@ -137,9 +133,19 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |  },
           |  "ACCESS_DENIED": {
           |    "statusCode": "403",
+          |    "responseParameters": {
+          |      "gatewayresponse.header.www-authenticate": "'Bearer realm=\"HMRC API Platform\"'"
+          |    },
           |    "responseTemplates": {
-          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"RESOURCE_FORBIDDEN\", \"message\": \"The application is blocked\"}",
-          |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>RESOURCE_FORBIDDEN</code><message>The application is blocked</message></errorResponse>"
+          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"$context.authorizer.code\", \"message\": \"$context.authorizer.message\"}",
+          |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>$context.authorizer.code</code><message>$context.authorizer.message</message></errorResponse>"
+          |    }
+          |  },
+          |  "DEFAULT_4XX": {
+          |    "statusCode": "404",
+          |    "responseTemplates": {
+          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"MATCHING_RESOURCE_NOT_FOUND\", \"message\": \"A resource with the name in the request can not be found in the API\"}",
+          |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>MATCHING_RESOURCE_NOT_FOUND</code><message>A resource with the name in the request can not be found in the API</message></errorResponse>"
           |    }
           |  }
           |}""".stripMargin

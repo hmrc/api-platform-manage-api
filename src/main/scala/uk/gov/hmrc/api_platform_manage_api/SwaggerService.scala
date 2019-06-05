@@ -84,21 +84,23 @@ class SwaggerService(environment: Map[String, String]) {
 
   private def amazonApigatewayResponses(version: String): Map[String, Object] = {
     Map(
-      "MISSING_AUTHENTICATION_TOKEN" -> Map("statusCode" -> "404", "responseTemplates" ->
-        Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MATCHING_RESOURCE_NOT_FOUND", "message": "A resource with the name in the request can not be found in the API"}""",
-            s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MATCHING_RESOURCE_NOT_FOUND</code><message>A resource with the name in the request can not be found in the API</message></errorResponse>")),
       "THROTTLED" -> Map("statusCode" -> "429", "responseTemplates" ->
         Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MESSAGE_THROTTLED_OUT", "message", "The request for the API is throttled as you have exceeded your quota."}""",
             s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MESSAGE_THROTTLED_OUT</code><message>The request for the API is throttled as you have exceeded your quota.</message></errorResponse>")),
       "UNAUTHORIZED" -> Map("statusCode" -> "401", "responseTemplates" ->
         Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MISSING_CREDENTIALS", "message": "Authentication information is not provided"}""",
             s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MISSING_CREDENTIALS</code><message>Authentication information is not provided</message></errorResponse>")),
-      "INVALID_API_KEY" -> Map("statusCode" -> "401", "responseTemplates" ->
-        Map(s"application/vnd.hmrc.$version+json" -> """{"code": "INVALID_CREDENTIALS", "message": "Invalid Authentication information provided"}""",
-            s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>")),
-      "ACCESS_DENIED" -> Map("statusCode" -> "403", "responseTemplates" ->
-        Map(s"application/vnd.hmrc.$version+json" -> """{"code": "RESOURCE_FORBIDDEN", "message": "The application is blocked"}""",
-          s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>RESOURCE_FORBIDDEN</code><message>The application is blocked</message></errorResponse>"))
+      "INVALID_API_KEY" -> Map("statusCode" -> "401", "responseParameters" -> Map("gatewayresponse.header.www-authenticate" -> """'Bearer realm="HMRC API Platform"'"""),
+        "responseTemplates" ->
+          Map(s"application/vnd.hmrc.$version+json" -> """{"code": "INVALID_CREDENTIALS", "message": "Invalid Authentication information provided"}""",
+              s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>")),
+      "ACCESS_DENIED" -> Map("statusCode" -> "403", "responseParameters" -> Map("gatewayresponse.header.www-authenticate" -> """'Bearer realm="HMRC API Platform"'"""),
+        "responseTemplates" ->
+          Map(s"application/vnd.hmrc.$version+json" -> """{"code": "$context.authorizer.code", "message": "$context.authorizer.message"}""",
+              s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>$context.authorizer.code</code><message>$context.authorizer.message</message></errorResponse>")),
+      "DEFAULT_4XX" -> Map("statusCode" -> "404", "responseTemplates" ->
+        Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MATCHING_RESOURCE_NOT_FOUND", "message": "A resource with the name in the request can not be found in the API"}""",
+            s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MATCHING_RESOURCE_NOT_FOUND</code><message>A resource with the name in the request can not be found in the API</message></errorResponse>"))
     )
   }
 
