@@ -74,12 +74,12 @@ class SwaggerService(environment: Map[String, String]) {
   }
 
   private def amazonApigatewayPolicy: ApiGatewayPolicy = {
-    val condition = if (environment.isDefinedAt("endpoint_type") && environment("endpoint_type") == "REGIONAL") {
-      IpAddressCondition(IpAddress(environment("office_ip_address")))
+    val statement = if (environment.isDefinedAt("endpoint_type") && environment("endpoint_type") == "REGIONAL") {
+      Statement(effect = "Allow", condition = IpAddressCondition(IpAddress(environment("office_ip_address"))))
     } else {
-      VpceCondition(StringEquals(environment("vpc_endpoint_id")))
+      Statement(condition = VpceCondition(StringEquals(environment("vpc_endpoint_id"))))
     }
-    ApiGatewayPolicy(statement = List(Statement(condition = condition)))
+    ApiGatewayPolicy(statement = List(statement))
   }
 
   private def amazonApigatewayResponses(version: String): Map[String, Object] = {

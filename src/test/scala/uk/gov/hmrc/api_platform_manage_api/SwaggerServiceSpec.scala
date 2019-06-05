@@ -81,9 +81,10 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       swagger.getVendorExtensions should contain key "x-amazon-apigateway-policy"
       val apiGatewayPolicy: ApiGatewayPolicy = swagger.getVendorExtensions.get("x-amazon-apigateway-policy").asInstanceOf[ApiGatewayPolicy]
       apiGatewayPolicy.statement should have length 1
+      apiGatewayPolicy.statement.head.effect shouldEqual "Deny"
       apiGatewayPolicy.statement.head.condition shouldBe a [VpceCondition]
       val condition: VpceCondition = apiGatewayPolicy.statement.head.condition.asInstanceOf[VpceCondition]
-      condition.stringEquals.awsSourceVpce shouldEqual vpcEndpointId
+      condition.stringNotEquals.awsSourceVpce shouldEqual vpcEndpointId
     }
 
     "add IP address condition if endpoint type is regional" in new SetupForRegionalEndpoints {
@@ -92,6 +93,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
       swagger.getVendorExtensions should contain key "x-amazon-apigateway-policy"
       val apiGatewayPolicy: ApiGatewayPolicy = swagger.getVendorExtensions.get("x-amazon-apigateway-policy").asInstanceOf[ApiGatewayPolicy]
       apiGatewayPolicy.statement should have length 1
+      apiGatewayPolicy.statement.head.effect shouldEqual "Allow"
       apiGatewayPolicy.statement.head.condition shouldBe a [IpAddressCondition]
       val condition: IpAddressCondition = apiGatewayPolicy.statement.head.condition.asInstanceOf[IpAddressCondition]
       condition.ipAddress.awsSourceIp shouldEqual officeIpAddress
