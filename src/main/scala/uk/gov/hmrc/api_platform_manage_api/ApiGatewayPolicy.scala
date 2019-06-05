@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 case class ApiGatewayPolicy(@JsonProperty("Version") version: String = "2012-10-17",
                             @JsonProperty("Statement") statement: List[Statement])
-case class Statement(@JsonProperty("Effect") effect: String = "Allow",
+case class Statement(@JsonProperty("Effect") effect: String = "Deny",
                      @JsonProperty("Principal") principal: String = "*",
                      @JsonProperty("Action") action: String = "execute-api:Invoke",
                      @JsonProperty("Resource") resource: String = "*",
@@ -28,5 +28,5 @@ case class Statement(@JsonProperty("Effect") effect: String = "Allow",
 sealed trait Condition
 case class IpAddressCondition(@JsonProperty("IpAddress") ipAddress: IpAddress) extends Condition
 case class IpAddress(@JsonProperty("aws:SourceIp") awsSourceIp: String)
-case class VpceCondition(@JsonProperty("StringEquals") stringEquals: StringEquals) extends Condition
+case class VpceCondition(@JsonProperty("StringNotEquals") stringNotEquals: StringEquals) extends Condition
 case class StringEquals(@JsonProperty("aws:sourceVpce") awsSourceVpce: String)
