@@ -136,7 +136,7 @@ class SwaggerService(environment: Map[String, String]) {
         "authorizerUri" -> environment("open_authorizer_uri"),
         "authorizerCredentials" -> environment("authorizer_credentials"),
         "authorizerResultTtlInSeconds" -> "300",
-        "identitySource" -> "method.request.httpMethod, method.request.path"))
+        "identitySource" -> "context.httpMethod, context.path"))
 
     Map("api-key"-> Map("type" -> "apiKey", "name" -> "x-api-key", "in" -> "header"),
         "application-authorizer" -> appAuthorizer,
