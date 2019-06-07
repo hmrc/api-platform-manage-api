@@ -118,6 +118,9 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |  },
           |  "UNAUTHORIZED": {
           |    "statusCode": "401",
+          |    "responseParameters": {
+          |      "gatewayresponse.header.www-authenticate": "'Bearer realm=\"HMRC API Platform\"'"
+          |    },
           |    "responseTemplates": {
           |      "application/vnd.hmrc.1.0+json": "{\"code\": \"MISSING_CREDENTIALS\", \"message\": \"Authentication information is not provided\"}",
           |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>MISSING_CREDENTIALS</code><message>Authentication information is not provided</message></errorResponse>"
