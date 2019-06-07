@@ -92,9 +92,10 @@ class SwaggerService(environment: Map[String, String]) {
       "THROTTLED" -> Map("statusCode" -> "429", "responseTemplates" ->
         Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MESSAGE_THROTTLED_OUT", "message", "The request for the API is throttled as you have exceeded your quota."}""",
             s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MESSAGE_THROTTLED_OUT</code><message>The request for the API is throttled as you have exceeded your quota.</message></errorResponse>")),
-      "UNAUTHORIZED" -> Map("statusCode" -> "401", "responseTemplates" ->
-        Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MISSING_CREDENTIALS", "message": "Authentication information is not provided"}""",
-            s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MISSING_CREDENTIALS</code><message>Authentication information is not provided</message></errorResponse>")),
+      "UNAUTHORIZED" -> Map("statusCode" -> "401", "responseParameters" -> Map("gatewayresponse.header.www-authenticate" -> """'Bearer realm="HMRC API Platform"'"""),
+        "responseTemplates" ->
+          Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MISSING_CREDENTIALS", "message": "Authentication information is not provided"}""",
+              s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MISSING_CREDENTIALS</code><message>Authentication information is not provided</message></errorResponse>")),
       "INVALID_API_KEY" -> Map("statusCode" -> "401", "responseParameters" -> Map("gatewayresponse.header.www-authenticate" -> """'Bearer realm="HMRC API Platform"'"""),
         "responseTemplates" ->
           Map(s"application/vnd.hmrc.$version+json" -> """{"code": "INVALID_CREDENTIALS", "message": "Invalid Authentication information provided"}""",
