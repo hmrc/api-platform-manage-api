@@ -41,7 +41,9 @@ class SwaggerService(environment: Map[String, String]) {
           case "Application & Application User" =>
             op._2.addSecurity("api-key", List())
             op._2.addSecurity("application-authorizer", List())
-          case "Application User" => op._2.addSecurity("user-authorizer", List())
+          case "Application User" =>
+            op._2.addSecurity("api-key", List())
+            op._2.addSecurity("user-authorizer", List())
           case "None" => op._2.addSecurity("open-authorizer", List())
         }
       }

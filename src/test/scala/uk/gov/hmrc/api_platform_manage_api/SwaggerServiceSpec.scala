@@ -257,7 +257,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
 
       toJson(paths("/world").getGet.getSecurity) should matchJson("""[{"open-authorizer":[]}]""")
       toJson(paths("/application").getGet.getSecurity) should matchJson("""[{"api-key":[]}, {"application-authorizer":[]}]""")
-      toJson(paths("/user").getGet.getSecurity) should matchJson("""[{"user-authorizer":[]}]""")
+      toJson(paths("/user").getGet.getSecurity) should matchJson("""[{"api-key":[]}, {"user-authorizer":[]}]""")
     }
 
     "add amazon extension for API key source" in new StandardSetup {
