@@ -117,7 +117,7 @@ class SwaggerService(environment: Map[String, String]) {
       "in" -> "header",
       "x-amazon-apigateway-authtype" -> "custom",
       "x-amazon-apigateway-authorizer" -> Map(
-        "type" -> "token",
+        "type" -> "request",
         "authorizerUri" -> environment("application_authorizer_uri"),
         "authorizerCredentials" -> environment("authorizer_credentials"),
         "authorizerResultTtlInSeconds" -> "300"))
