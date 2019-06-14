@@ -175,7 +175,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |        "in": "header",
           |        "x-amazon-apigateway-authtype": "custom",
           |        "x-amazon-apigateway-authorizer": {
-          |            "type": "token",
+          |            "type": "request",
           |            "authorizerUri": "arn:aws:apigateway:application_authorizer",
           |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
           |            "authorizerResultTtlInSeconds": "300"
