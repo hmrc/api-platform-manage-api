@@ -120,7 +120,8 @@ class SwaggerService(environment: Map[String, String]) {
         "type" -> "request",
         "authorizerUri" -> environment("application_authorizer_uri"),
         "authorizerCredentials" -> environment("authorizer_credentials"),
-        "authorizerResultTtlInSeconds" -> "300"))
+        "authorizerResultTtlInSeconds" -> "300",
+        "identitySource" -> "method.request.header.Authorization"))
 
     val userAuthorizer = Map(
       "type" -> "apiKey",
