@@ -17,7 +17,7 @@
 package uk.gov.hmrc.api_platform_manage_api
 
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient
-import software.amazon.awssdk.services.apigateway.model.{GetApiKeysRequest, GetRestApisRequest, GetRestApisResponse, GetUsagePlansRequest}
+import software.amazon.awssdk.services.apigateway.model.{ApiKey, GetApiKeysRequest, GetRestApisRequest, GetRestApisResponse, GetUsagePlansRequest}
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
@@ -69,12 +69,12 @@ trait AwsIdRetriever {
     }
   }
 
-  def getAwsApiKeyIdByApplicationName(applicationName: String): Option[String] = {
-    findAwsApiKeyId(applicationName, None)
+  def getAwsApiKeyByKeyName(keyName: String): Option[ApiKey] = {
+    findAwsApiKeyId(keyName, None)
   }
 
   @tailrec
-  private def findAwsApiKeyId(applicationName: String, position: Option[String]): Option[String] = {
+  private def findAwsApiKeyId(applicationName: String, position: Option[String]): Option[ApiKey] = {
     def buildGetApiKeysRequest(position: Option[String]): GetApiKeysRequest = {
       position match {
         case Some(p) => GetApiKeysRequest.builder().limit(Limit).position(p).build()
@@ -85,7 +85,7 @@ trait AwsIdRetriever {
     val response = apiGatewayClient.getApiKeys(buildGetApiKeysRequest(position))
 
     response.items().asScala.find(apiKey => apiKey.name == applicationName) match {
-      case Some(apiKey) => Some(apiKey.id)
+      case Some(apiKey) => Some(apiKey)
       case _ => if (response.position == null) None else findAwsApiKeyId(applicationName, Some(response.position))
     }
   }

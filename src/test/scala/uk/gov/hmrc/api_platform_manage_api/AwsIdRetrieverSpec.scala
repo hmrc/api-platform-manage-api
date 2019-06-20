@@ -142,41 +142,41 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
       .build()
   }
 
-  "getAwsApiKeyIdByApplicationName" should {
+  "getAwsApiKeyIdByKeyName" should {
     "find id on first page of results" in new Setup {
       val apiKeyId = UUID.randomUUID().toString
-      val applicationName = "foo"
+      val keyName = "foo"
 
-      when(mockApiGatewayClient.getApiKeys(any[GetApiKeysRequest])).thenReturn(buildMatchingApiKeysResponse(apiKeyId, applicationName))
+      when(mockApiGatewayClient.getApiKeys(any[GetApiKeysRequest])).thenReturn(buildMatchingApiKeysResponse(apiKeyId, keyName))
 
-      val returnedId = getAwsApiKeyIdByApplicationName(applicationName)
+      val returnedKey = getAwsApiKeyByKeyName(keyName)
 
-      returnedId shouldEqual Some(apiKeyId)
+      returnedKey.get should have ('id (apiKeyId), 'name (keyName))
     }
 
     "find id when results are paged" in new Setup {
       val apiKeyId = UUID.randomUUID().toString
-      val applicationName = "foo"
+      val keyName = "foo"
 
       when(mockApiGatewayClient.getApiKeys(any[GetApiKeysRequest]))
         .thenReturn(
           buildNonMatchingApiKeysResponse(Limit),
-          buildMatchingApiKeysResponse(apiKeyId, applicationName))
+          buildMatchingApiKeysResponse(apiKeyId, keyName))
 
-      val returnedId = getAwsApiKeyIdByApplicationName(applicationName)
+      val returnedKey = getAwsApiKeyByKeyName(keyName)
 
-      returnedId shouldEqual Some(apiKeyId)
+      returnedKey.get should have ('id (apiKeyId), 'name (keyName))
       verify(mockApiGatewayClient, times(2)).getApiKeys(any[GetApiKeysRequest])
     }
 
-    "return None if application name is not found" in new Setup {
-      val applicationName = "foo"
+    "return None if key name is not found" in new Setup {
+      val keyName = "foo"
 
       when(mockApiGatewayClient.getApiKeys(any[GetApiKeysRequest])).thenReturn(GetApiKeysResponse.builder().build())
 
-      val returnedId = getAwsApiKeyIdByApplicationName(applicationName)
+      val returnedKey = getAwsApiKeyByKeyName(keyName)
 
-      returnedId shouldEqual None
+      returnedKey shouldEqual None
     }
   }
 
