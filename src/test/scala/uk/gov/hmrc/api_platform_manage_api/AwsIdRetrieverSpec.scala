@@ -143,38 +143,23 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
   }
 
   "getAwsApiKeyIdByKeyName" should {
-    "find id on first page of results" in new Setup {
+    "return the API key if it is found" in new Setup {
       val apiKeyId = UUID.randomUUID().toString
       val keyName = "foo"
+      when(mockApiGatewayClient.getApiKeys(GetApiKeysRequest.builder().nameQuery(keyName).limit(Limit).build()))
+        .thenReturn(buildMatchingApiKeysResponse(apiKeyId, keyName))
 
-      when(mockApiGatewayClient.getApiKeys(any[GetApiKeysRequest])).thenReturn(buildMatchingApiKeysResponse(apiKeyId, keyName))
-
-      val returnedKey = getAwsApiKeyByKeyName(keyName)
-
-      returnedKey.get should have ('id (apiKeyId), 'name (keyName))
-    }
-
-    "find id when results are paged" in new Setup {
-      val apiKeyId = UUID.randomUUID().toString
-      val keyName = "foo"
-
-      when(mockApiGatewayClient.getApiKeys(any[GetApiKeysRequest]))
-        .thenReturn(
-          buildNonMatchingApiKeysResponse(Limit),
-          buildMatchingApiKeysResponse(apiKeyId, keyName))
-
-      val returnedKey = getAwsApiKeyByKeyName(keyName)
+      val returnedKey: Option[ApiKey] = getAwsApiKeyByKeyName(keyName)
 
       returnedKey.get should have ('id (apiKeyId), 'name (keyName))
-      verify(mockApiGatewayClient, times(2)).getApiKeys(any[GetApiKeysRequest])
     }
 
     "return None if key name is not found" in new Setup {
       val keyName = "foo"
+      when(mockApiGatewayClient.getApiKeys(GetApiKeysRequest.builder().nameQuery(keyName).limit(Limit).build()))
+        .thenReturn(GetApiKeysResponse.builder().build())
 
-      when(mockApiGatewayClient.getApiKeys(any[GetApiKeysRequest])).thenReturn(GetApiKeysResponse.builder().build())
-
-      val returnedKey = getAwsApiKeyByKeyName(keyName)
+      val returnedKey: Option[ApiKey] = getAwsApiKeyByKeyName(keyName)
 
       returnedKey shouldEqual None
     }
