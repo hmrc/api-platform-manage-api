@@ -19,13 +19,13 @@ package uk.gov.hmrc.api_platform_manage_api
 import scala.collection.JavaConverters.mapAsJavaMapConverter
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient
 import software.amazon.awssdk.services.apigateway.model.Op.REPLACE
-import software.amazon.awssdk.services.apigateway.model.{CreateDeploymentRequest, PatchOperation, UpdateStageRequest}
+import software.amazon.awssdk.services.apigateway.model.{CreateDeploymentRequest, PatchOperation, UpdateAuthorizerRequest, UpdateStageRequest}
 
 class DeploymentService(apiGatewayClient: ApiGatewayClient) {
 
   def deployApi(restApiId: String, context: String, version: String): Unit = {
     apiGatewayClient.createDeployment(buildCreateDeploymentRequest(restApiId, context, version))
-    apiGatewayClient.updateStage(buildUpdateStageRequest(restApiId))
+    apiGatewayClient.updateStage(buildUpdateStageRequest(restApiId, NoLogging))
   }
 
   private def buildCreateDeploymentRequest(restApiId: String, context: String, version: String): CreateDeploymentRequest = {
@@ -37,12 +37,20 @@ class DeploymentService(apiGatewayClient: ApiGatewayClient) {
       .build()
   }
 
-  private def buildUpdateStageRequest(restApiId: String): UpdateStageRequest = {
+  private def buildUpdateStageRequest(restApiId: String, loggingLevel: StageLoggingLevel): UpdateStageRequest = {
     UpdateStageRequest
       .builder()
       .restApiId(restApiId)
       .stageName("current")
-      .patchOperations(PatchOperation.builder().op(REPLACE).path("/*/*/logging/loglevel").value("INFO").build())
+      .patchOperations(loggingLevel.patchOperation)
       .build()
   }
 }
+
+case class StageLoggingLevel(level: String) {
+  def patchOperation: PatchOperation = PatchOperation.builder().op(REPLACE).path("/*/*/logging/loglevel").value(level).build()
+}
+
+object InfoLogging extends StageLoggingLevel("INFO")
+object WarnLogging extends StageLoggingLevel("WARN")
+object NoLogging extends StageLoggingLevel("OFF")

@@ -77,7 +77,7 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
       capturedRequest.restApiId shouldEqual importedRestApiId
       capturedRequest.stageName shouldEqual "current"
       val operations = capturedRequest.patchOperations.asScala
-      exactly(1, operations) should have('op (REPLACE), 'path ("/*/*/logging/loglevel"), 'value ("INFO"))
+      exactly(1, operations) should have('op (REPLACE), 'path ("/*/*/logging/loglevel"), 'value ("OFF"))
     }
 
     "correctly handle UnauthorizedException thrown by AWS SDK when updating stage with extra settings" in new Setup {
@@ -90,6 +90,26 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
       }
 
       ex.getMessage shouldEqual errorMessage
+    }
+  }
+
+  "StageLoggingLevel" should {
+    "build correct PatchOperation object for NoLogging" in {
+      NoLogging.patchOperation.op() shouldBe Op.REPLACE
+      NoLogging.patchOperation.path() shouldBe "/*/*/logging/loglevel"
+      NoLogging.patchOperation.value() shouldBe "OFF"
+    }
+
+    "build correct PatchOperation object for InfoLogging" in {
+      InfoLogging.patchOperation.op() shouldBe Op.REPLACE
+      InfoLogging.patchOperation.path() shouldBe "/*/*/logging/loglevel"
+      InfoLogging.patchOperation.value() shouldBe "INFO"
+    }
+
+    "build correct PatchOperation object for WarnLogging" in {
+      WarnLogging.patchOperation.op() shouldBe Op.REPLACE
+      WarnLogging.patchOperation.path() shouldBe "/*/*/logging/loglevel"
+      WarnLogging.patchOperation.value() shouldBe "WARN"
     }
   }
 }
