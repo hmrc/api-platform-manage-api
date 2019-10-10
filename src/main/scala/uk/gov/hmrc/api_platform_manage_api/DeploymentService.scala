@@ -16,16 +16,21 @@
 
 package uk.gov.hmrc.api_platform_manage_api
 
-import scala.collection.JavaConverters.mapAsJavaMapConverter
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient
 import software.amazon.awssdk.services.apigateway.model.Op.REPLACE
 import software.amazon.awssdk.services.apigateway.model.{CreateDeploymentRequest, PatchOperation, UpdateStageRequest}
 
+import scala.collection.JavaConverters.mapAsJavaMapConverter
+
 class DeploymentService(apiGatewayClient: ApiGatewayClient) {
 
-  def deployApi(restApiId: String, context: String, version: String): Unit = {
+  def deployApi(restApiId: String,
+                context: String,
+                version: String,
+                cloudWatchLoggingLevel: CloudWatchLoggingLevel,
+                accessLogConfiguration: AccessLogConfiguration): Unit = {
     apiGatewayClient.createDeployment(buildCreateDeploymentRequest(restApiId, context, version))
-    apiGatewayClient.updateStage(buildUpdateStageRequest(restApiId))
+    apiGatewayClient.updateStage(buildUpdateStageRequest(restApiId, cloudWatchLoggingLevel, accessLogConfiguration))
   }
 
   private def buildCreateDeploymentRequest(restApiId: String, context: String, version: String): CreateDeploymentRequest = {
@@ -37,12 +42,34 @@ class DeploymentService(apiGatewayClient: ApiGatewayClient) {
       .build()
   }
 
-  private def buildUpdateStageRequest(restApiId: String): UpdateStageRequest = {
+  private def buildUpdateStageRequest(restApiId: String,
+                                      cloudWatchLoggingLevel: CloudWatchLoggingLevel,
+                                      accessLogConfiguration: AccessLogConfiguration): UpdateStageRequest = {
     UpdateStageRequest
       .builder()
       .restApiId(restApiId)
       .stageName("current")
-      .patchOperations(PatchOperation.builder().op(REPLACE).path("/*/*/logging/loglevel").value("INFO").build())
+      .patchOperations(
+        cloudWatchLoggingLevel.patchOperation,
+        accessLogConfiguration.formatPatchOperation,
+        accessLogConfiguration.logDestinationPatchOperation)
       .build()
   }
+
+}
+
+case class CloudWatchLoggingLevel(level: String) {
+  def patchOperation: PatchOperation = PatchOperation.builder().op(REPLACE).path("/*/*/logging/loglevel").value(level).build()
+}
+
+object CloudWatchInfoLogging extends CloudWatchLoggingLevel("INFO")
+object CloudWatchWarnLogging extends CloudWatchLoggingLevel("WARN")
+object NoCloudWatchLogging extends CloudWatchLoggingLevel("OFF")
+
+case class AccessLogConfiguration(format: String, destinationArn: String) {
+  def formatPatchOperation: PatchOperation =
+    PatchOperation.builder().op(REPLACE).path("/accessLogSettings/format").value(format).build()
+
+  def logDestinationPatchOperation: PatchOperation =
+    PatchOperation.builder().op(REPLACE).path("/accessLogSettings/destinationArn").value(destinationArn).build()
 }

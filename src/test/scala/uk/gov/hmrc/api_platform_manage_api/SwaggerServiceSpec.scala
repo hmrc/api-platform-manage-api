@@ -178,7 +178,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |            "type": "request",
           |            "authorizerUri": "arn:aws:apigateway:application_authorizer",
           |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
-          |            "authorizerResultTtlInSeconds": "300",
+          |            "authorizerResultTtlInSeconds": "0",
           |            "identitySource": "method.request.header.Authorization"
           |        }
           |    },
@@ -190,7 +190,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |        "x-amazon-apigateway-authorizer": {
           |            "authorizerUri": "arn:aws:apigateway:user_authorizer",
           |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
-          |            "authorizerResultTtlInSeconds": "300",
+          |            "authorizerResultTtlInSeconds": "0",
           |            "identitySource": "method.request.header.Authorization",
           |            "type": "request"
           |        }
@@ -203,7 +203,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |        "x-amazon-apigateway-authorizer": {
           |            "authorizerUri": "arn:aws:apigateway:open_authorizer",
           |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
-          |            "authorizerResultTtlInSeconds": "300",
+          |            "authorizerResultTtlInSeconds": "0",
           |            "identitySource": "context.httpMethod, context.path",
           |            "type": "request"
           |        }

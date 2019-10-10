@@ -34,6 +34,7 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
   trait Setup {
     val context: String = "context"
     val version: String = "version"
+    val accessLogConfiguration = AccessLogConfiguration("""{"foo": "bar"}""", "aws:arn:1234567890")
     val mockAPIGatewayClient: ApiGatewayClient = mock[ApiGatewayClient]
     val deploymentService = new DeploymentService(mockAPIGatewayClient)
   }
@@ -44,7 +45,7 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
       val createDeploymentRequestCaptor: ArgumentCaptor[CreateDeploymentRequest] = ArgumentCaptor.forClass(classOf[CreateDeploymentRequest])
       when(mockAPIGatewayClient.createDeployment(createDeploymentRequestCaptor.capture())).thenReturn(CreateDeploymentResponse.builder().build())
 
-      deploymentService.deployApi(importedRestApiId, context, version)
+      deploymentService.deployApi(importedRestApiId, context, version, NoCloudWatchLogging, accessLogConfiguration)
 
       val capturedRequest: CreateDeploymentRequest = createDeploymentRequestCaptor.getValue
       capturedRequest.restApiId shouldEqual importedRestApiId
@@ -59,7 +60,7 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
       when(mockAPIGatewayClient.createDeployment(any[CreateDeploymentRequest])).thenThrow(UnauthorizedException.builder().message(errorMessage).build())
 
       val ex: Exception = intercept[Exception]{
-        deploymentService.deployApi("123", context, version)
+        deploymentService.deployApi("123", context, version, NoCloudWatchLogging, accessLogConfiguration)
       }
 
       ex.getMessage shouldEqual errorMessage
@@ -71,13 +72,13 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
       val updateStageRequestCaptor: ArgumentCaptor[UpdateStageRequest] = ArgumentCaptor.forClass(classOf[UpdateStageRequest])
       when(mockAPIGatewayClient.updateStage(updateStageRequestCaptor.capture())).thenReturn(UpdateStageResponse.builder().build())
 
-      deploymentService.deployApi(importedRestApiId, context, version)
+      deploymentService.deployApi(importedRestApiId, context, version, NoCloudWatchLogging, accessLogConfiguration)
 
       val capturedRequest: UpdateStageRequest = updateStageRequestCaptor.getValue
       capturedRequest.restApiId shouldEqual importedRestApiId
       capturedRequest.stageName shouldEqual "current"
       val operations = capturedRequest.patchOperations.asScala
-      exactly(1, operations) should have('op (REPLACE), 'path ("/*/*/logging/loglevel"), 'value ("INFO"))
+      exactly(1, operations) should have('op (REPLACE), 'path ("/*/*/logging/loglevel"), 'value ("OFF"))
     }
 
     "correctly handle UnauthorizedException thrown by AWS SDK when updating stage with extra settings" in new Setup {
@@ -86,10 +87,47 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
       when(mockAPIGatewayClient.updateStage(any[UpdateStageRequest])).thenThrow(UnauthorizedException.builder().message(errorMessage).build())
 
       val ex: Exception = intercept[Exception]{
-        deploymentService.deployApi("123", context, version)
+        deploymentService.deployApi("123", context, version, NoCloudWatchLogging, accessLogConfiguration)
       }
 
       ex.getMessage shouldEqual errorMessage
+    }
+  }
+
+  "StageLoggingLevel" should {
+    "build correct PatchOperation object for NoLogging" in {
+      NoCloudWatchLogging.patchOperation.op() shouldBe Op.REPLACE
+      NoCloudWatchLogging.patchOperation.path() shouldBe "/*/*/logging/loglevel"
+      NoCloudWatchLogging.patchOperation.value() shouldBe "OFF"
+    }
+
+    "build correct PatchOperation object for InfoLogging" in {
+      CloudWatchInfoLogging.patchOperation.op() shouldBe Op.REPLACE
+      CloudWatchInfoLogging.patchOperation.path() shouldBe "/*/*/logging/loglevel"
+      CloudWatchInfoLogging.patchOperation.value() shouldBe "INFO"
+    }
+
+    "build correct PatchOperation object for WarnLogging" in {
+      CloudWatchWarnLogging.patchOperation.op() shouldBe Op.REPLACE
+      CloudWatchWarnLogging.patchOperation.path() shouldBe "/*/*/logging/loglevel"
+      CloudWatchWarnLogging.patchOperation.value() shouldBe "WARN"
+    }
+  }
+
+  "AccessLogConfiguration" should {
+    "build correct PatchOperation objects" in {
+      val logFormat = """{"foo": "bar"}"""
+      val destinationArn = "aws:arn:1234567890"
+
+      val accessLogConfiguration = AccessLogConfiguration(logFormat, destinationArn)
+
+      accessLogConfiguration.formatPatchOperation.op() shouldBe Op.REPLACE
+      accessLogConfiguration.formatPatchOperation.path() shouldBe "/accessLogSettings/format"
+      accessLogConfiguration.formatPatchOperation.value() shouldBe logFormat
+
+      accessLogConfiguration.logDestinationPatchOperation.op() shouldBe Op.REPLACE
+      accessLogConfiguration.logDestinationPatchOperation.path() shouldBe "/accessLogSettings/destinationArn"
+      accessLogConfiguration.logDestinationPatchOperation.value() shouldBe destinationArn
     }
   }
 }
