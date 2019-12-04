@@ -112,7 +112,7 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |  "THROTTLED":{
           |    "statusCode": "429",
           |    "responseTemplates":{
-          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"MESSAGE_THROTTLED_OUT\", \"message\", \"The request for the API is throttled as you have exceeded your quota.\"}",
+          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"MESSAGE_THROTTLED_OUT\", \"message\": \"The request for the API is throttled as you have exceeded your quota.\"}",
           |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>MESSAGE_THROTTLED_OUT</code><message>The request for the API is throttled as you have exceeded your quota.</message></errorResponse>"
           |    }
           |  },
