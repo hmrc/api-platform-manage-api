@@ -90,7 +90,7 @@ class SwaggerService(environment: Map[String, String]) {
   private def amazonApigatewayResponses(version: String): Map[String, Object] = {
     Map(
       "THROTTLED" -> Map("statusCode" -> "429", "responseTemplates" ->
-        Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MESSAGE_THROTTLED_OUT", "message", "The request for the API is throttled as you have exceeded your quota."}""",
+        Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MESSAGE_THROTTLED_OUT", "message": "The request for the API is throttled as you have exceeded your quota."}""",
             s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MESSAGE_THROTTLED_OUT</code><message>The request for the API is throttled as you have exceeded your quota.</message></errorResponse>")),
       "UNAUTHORIZED" -> Map("statusCode" -> "401", "responseParameters" -> Map("gatewayresponse.header.www-authenticate" -> """'Bearer realm="HMRC API Platform"'"""),
         "responseTemplates" ->
