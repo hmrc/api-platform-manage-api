@@ -10,7 +10,7 @@ lazy val appName = "api-platform-manage-api"
 lazy val appDependencies: Seq[ModuleID] = compileDependencies ++ testDependencies
 
 lazy val compileDependencies = Seq(
-  "uk.gov.hmrc" %% "aws-gateway-proxied-request-lambda" % "0.7.0",
+  "uk.gov.hmrc" %% "aws-gateway-proxied-request-lambda" % "0.8.0",
   "software.amazon.awssdk" % "apigateway" % "2.5.13",
   "io.swagger" % "swagger-parser" % "1.0.42"
 )
@@ -27,12 +27,11 @@ lazy val testDependencies = Seq(
 lazy val library = (project in file("."))
   .enablePlugins(SbtAutoBuildPlugin, SbtGitVersioning, SbtArtifactory)
   .settings(
-    scalaVersion := "2.11.11",
+    scalaVersion := "2.12.10",
     name := appName,
     majorVersion := 0,
     makePublicallyAvailableOnBintray := true,
     targetJvm := "jvm-1.8",
-    crossScalaVersions := Seq("2.11.11"),
     scalacOptions += "-Ypartial-unification",
     libraryDependencies ++= appDependencies,
     resolvers := Seq(
