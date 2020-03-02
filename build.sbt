@@ -10,7 +10,7 @@ lazy val appName = "api-platform-manage-api"
 lazy val appDependencies: Seq[ModuleID] = compileDependencies ++ testDependencies
 
 lazy val compileDependencies = Seq(
-  "uk.gov.hmrc" %% "aws-gateway-proxied-request-lambda" % "0.6.0",
+  "uk.gov.hmrc" %% "aws-gateway-proxied-request-lambda" % "0.7.0",
   "software.amazon.awssdk" % "apigateway" % "2.5.13",
   "io.swagger" % "swagger-parser" % "1.0.42"
 )
