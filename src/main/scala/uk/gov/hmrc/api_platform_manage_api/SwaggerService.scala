@@ -106,7 +106,10 @@ class SwaggerService(environment: Map[String, String]) {
               s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>$context.authorizer.code</code><message>$context.authorizer.message</message></errorResponse>")),
       "DEFAULT_4XX" -> Map("statusCode" -> "404", "responseTemplates" ->
         Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MATCHING_RESOURCE_NOT_FOUND", "message": "A resource with the name in the request can not be found in the API"}""",
-            s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MATCHING_RESOURCE_NOT_FOUND</code><message>A resource with the name in the request can not be found in the API</message></errorResponse>"))
+            s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MATCHING_RESOURCE_NOT_FOUND</code><message>A resource with the name in the request can not be found in the API</message></errorResponse>")),
+      "DEFAULT_5XX" -> Map("statusCode" -> "503", "responseTemplates" ->
+        Map(s"application/vnd.hmrc.$version+json" -> """{"code": "SERVER_ERROR", "message": "A temporary problem occurred"}""",
+          s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>SERVER_ERROR</code><message>A temporary problem occurred</message></errorResponse>"))
     )
   }
 

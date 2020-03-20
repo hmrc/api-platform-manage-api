@@ -152,6 +152,13 @@ class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers wi
           |      "application/vnd.hmrc.1.0+json": "{\"code\": \"MATCHING_RESOURCE_NOT_FOUND\", \"message\": \"A resource with the name in the request can not be found in the API\"}",
           |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>MATCHING_RESOURCE_NOT_FOUND</code><message>A resource with the name in the request can not be found in the API</message></errorResponse>"
           |    }
+          |  },
+          |  "DEFAULT_5XX": {
+          |    "statusCode": "503",
+          |    "responseTemplates": {
+          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"SERVER_ERROR\", \"message\": \"A temporary problem occurred\"}",
+          |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>SERVER_ERROR</code><message>A temporary problem occurred</message></errorResponse>"
+          |    }
           |  }
           |}""".stripMargin
 
