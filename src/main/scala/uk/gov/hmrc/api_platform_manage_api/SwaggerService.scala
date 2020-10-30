@@ -19,7 +19,6 @@ package uk.gov.hmrc.api_platform_manage_api
 import io.swagger.models.{HttpMethod, Operation, Swagger}
 import io.swagger.parser.SwaggerParser
 
-import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.util.matching.Regex
 
@@ -39,12 +38,12 @@ class SwaggerService(environment: Map[String, String]) {
 
         op._2.getVendorExtensions.getOrDefault("x-auth-type", "") match {
           case "Application & Application User" =>
-            op._2.addSecurity("api-key", List())
-            op._2.addSecurity("application-authorizer", List())
+            op._2.addSecurity("api-key", List.empty.asJava)
+            op._2.addSecurity("application-authorizer", List.empty.asJava)
           case "Application User" =>
-            op._2.addSecurity("api-key", List())
-            op._2.addSecurity("user-authorizer", List())
-          case "None" => op._2.addSecurity("open-authorizer", List())
+            op._2.addSecurity("api-key", List.empty.asJava)
+            op._2.addSecurity("user-authorizer", List.empty.asJava)
+          case "None" => op._2.addSecurity("open-authorizer", List.empty.asJava)
         }
       }
     }

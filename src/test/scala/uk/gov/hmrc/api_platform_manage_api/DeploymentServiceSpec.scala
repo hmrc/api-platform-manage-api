@@ -50,7 +50,7 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
       val capturedRequest: CreateDeploymentRequest = createDeploymentRequestCaptor.getValue
       capturedRequest.restApiId shouldEqual importedRestApiId
       capturedRequest.stageName shouldEqual "current"
-      var stageVars = capturedRequest.variables.asScala.toStream
+      val stageVars = capturedRequest.variables.asScala.toStream
       stageVars should contain("context" -> context)
       stageVars should contain("version" -> version)
     }
