@@ -34,10 +34,7 @@ lazy val library = (project in file("."))
     makePublicallyAvailableOnBintray := true,
     targetJvm := "jvm-1.8",
     scalacOptions += "-Ypartial-unification",
-    libraryDependencies ++= appDependencies,
-    resolvers := Seq(
-      Resolver.bintrayRepo("hmrc", "releases")
-    )
+    libraryDependencies ++= appDependencies
   )
 
 // Coverage configuration
