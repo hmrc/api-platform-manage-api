@@ -1,43 +1,35 @@
 import sbt.Keys._
 import sbt._
-import uk.gov.hmrc.DefaultBuildSettings.targetJvm
-import uk.gov.hmrc.SbtArtifactory.autoImport.makePublicallyAvailableOnBintray
-import uk.gov.hmrc.{SbtArtifactory, SbtAutoBuildPlugin}
-import uk.gov.hmrc.versioning.SbtGitVersioning
-import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
 lazy val appName = "api-platform-manage-api"
 lazy val appDependencies: Seq[ModuleID] = compileDependencies ++ testDependencies
 
 lazy val compileDependencies = Seq(
-  "uk.gov.hmrc" %% "aws-gateway-proxied-request-lambda" % "0.10.0",
-  "software.amazon.awssdk" % "apigateway" % "2.5.13",
-  "io.swagger" % "swagger-parser" % "1.0.42"
+  "uk.gov.hmrc"            %% "aws-gateway-proxied-request-lambda" % "0.14.0-SNAPSHOT",
+  "software.amazon.awssdk"  % "apigateway"                         % "2.31.59",
+  "io.swagger"              % "swagger-parser"                     % "1.0.75"
 )
-
-lazy val testScope: String = "test"
 
 lazy val testDependencies = Seq(
-  "org.scalatest" %% "scalatest" % "3.0.5" % testScope,
-  "com.stephenn" %% "scalatest-json-jsonassert" % "0.0.3" % testScope,
-  "org.pegdown" % "pegdown" % "1.6.0" % testScope,
-  "org.mockito" % "mockito-core" % "2.25.1" % testScope
-)
+  "org.scalatest"        %% "scalatest"                 % "3.2.18",
+  "com.vladsch.flexmark"  % "flexmark-all"              % "0.64.8",
+  "com.stephenn"         %% "scalatest-json-jsonassert" % "0.2.5",
+  "org.pegdown"           % "pegdown"                   % "1.6.0",
+  "org.mockito"          %% "mockito-scala-scalatest"   % "1.17.29"
+).map(_ % Test)
 
 lazy val library = (project in file("."))
-  .enablePlugins(SbtAutoBuildPlugin, SbtGitVersioning, SbtArtifactory)
   .disablePlugins(JUnitXmlReportPlugin)
   .settings(
-    scalaVersion := "2.12.10",
+    scalaVersion := "2.13.16",
     name := appName,
     majorVersion := 0,
-    makePublicallyAvailableOnBintray := true,
-    targetJvm := "jvm-1.8",
-    scalacOptions += "-Ypartial-unification",
+    isPublicArtefact := true,
     libraryDependencies ++= appDependencies
   )
 
 // Coverage configuration
-coverageMinimum := 90
+coverageMinimumStmtTotal := 90
+coverageMinimumBranchTotal := 90
 coverageFailOnMinimum := true
 coverageExcludedPackages := "<empty>;uk.gov.hmrc.BuildInfo"
