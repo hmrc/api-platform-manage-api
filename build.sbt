@@ -14,7 +14,6 @@ lazy val testDependencies = Seq(
   "org.scalatest"        %% "scalatest"                 % "3.2.18",
   "com.vladsch.flexmark"  % "flexmark-all"              % "0.64.8",
   "com.stephenn"         %% "scalatest-json-jsonassert" % "0.2.5",
-  "org.pegdown"           % "pegdown"                   % "1.6.0",
   "org.mockito"          %% "mockito-scala-scalatest"   % "1.17.29"
 ).map(_ % Test)
 
