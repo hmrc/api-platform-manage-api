@@ -20,12 +20,13 @@ import java.net.HttpURLConnection._
 
 import com.amazonaws.services.lambda.runtime.LambdaLogger
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
-import org.scalatest._
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import software.amazon.awssdk.services.apigateway.model._
 import uk.gov.hmrc.api_platform_manage_api.ErrorRecovery.TooManyRequests
 
-class ErrorRecoverySpec extends WordSpecLike with Matchers with MockitoSugar {
+class ErrorRecoverySpec extends AnyWordSpec with Matchers with MockitoSugar {
 
   val errorMessage = "something went wrong"
   val errors: Map[Exception, Int] = Map(
@@ -42,8 +43,11 @@ class ErrorRecoverySpec extends WordSpecLike with Matchers with MockitoSugar {
   "error recovery" should {
     errors foreach { ex =>
       s"handle ${ex._1.getClass.getSimpleName}" in {
-        val responseEvent: APIGatewayProxyResponseEvent = ErrorRecovery.recovery(mock[LambdaLogger])(ex._1)
-        responseEvent should have('statusCode (ex._2), 'body (errorMessage))
+        val logger = mock[LambdaLogger]
+        doNothing.when(logger).log(*[String])
+        
+        val responseEvent: APIGatewayProxyResponseEvent = ErrorRecovery.recovery(logger)(ex._1)
+        responseEvent should have(Symbol("statusCode") (ex._2), Symbol("body") (errorMessage))
       }
     }
   }

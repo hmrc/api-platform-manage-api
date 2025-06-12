@@ -20,12 +20,13 @@ import java.util.UUID
 
 import com.stephenn.scalatest.jsonassert.JsonMatchers
 import io.swagger.models.Swagger
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.hmrc.aws_gateway_proxied_request_lambda.JsonMapper
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
-class SwaggerServiceSpec extends WordSpecLike with Matchers with JsonMatchers with JsonMapper {
+class SwaggerServiceSpec extends AnyWordSpec with Matchers with JsonMatchers with JsonMapper {
 
   val officeIpAddress = "192.168.1.1/32"
   val vpcEndpointId: String = UUID.randomUUID().toString

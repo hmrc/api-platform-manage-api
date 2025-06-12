@@ -18,23 +18,24 @@ package uk.gov.hmrc.api_platform_manage_api
 
 import java.util.UUID
 
-import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
-import org.scalatest._
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.captor.ArgCaptor
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient
 import software.amazon.awssdk.services.apigateway.model.Op.REPLACE
 import software.amazon.awssdk.services.apigateway.model._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
-class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar {
+class DeploymentServiceSpec extends AnyWordSpec with Matchers with MockitoSugar {
 
   trait Setup {
     val context: String = "context"
     val version: String = "version"
     val accessLogConfiguration = AccessLogConfiguration("""{"foo": "bar"}""", "aws:arn:1234567890")
+    val createDeploymentResponse = CreateDeploymentResponse.builder().build()
+    val updateStageResponse = UpdateStageResponse.builder().build()
     val mockAPIGatewayClient: ApiGatewayClient = mock[ApiGatewayClient]
     val deploymentService = new DeploymentService(mockAPIGatewayClient)
   }
@@ -42,22 +43,25 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
   "deployApi" should {
     "deploy the rest API" in new Setup {
       val importedRestApiId: String = UUID.randomUUID().toString
-      val createDeploymentRequestCaptor: ArgumentCaptor[CreateDeploymentRequest] = ArgumentCaptor.forClass(classOf[CreateDeploymentRequest])
-      when(mockAPIGatewayClient.createDeployment(createDeploymentRequestCaptor.capture())).thenReturn(CreateDeploymentResponse.builder().build())
+      when(mockAPIGatewayClient.createDeployment(*[CreateDeploymentRequest])).thenReturn(createDeploymentResponse)  
+      when(mockAPIGatewayClient.updateStage(*[UpdateStageRequest])).thenReturn(updateStageResponse)
 
       deploymentService.deployApi(importedRestApiId, context, version, NoCloudWatchLogging, accessLogConfiguration)
 
-      val capturedRequest: CreateDeploymentRequest = createDeploymentRequestCaptor.getValue
-      capturedRequest.restApiId shouldEqual importedRestApiId
-      capturedRequest.stageName shouldEqual "current"
-      val stageVars = capturedRequest.variables.asScala.toStream
+      val createDeploymentRequestCaptor = ArgCaptor[CreateDeploymentRequest]
+      verify(mockAPIGatewayClient).createDeployment(createDeploymentRequestCaptor.capture)
+      val capturedRequest: CreateDeploymentRequest = createDeploymentRequestCaptor.value
+      capturedRequest.restApiId shouldBe importedRestApiId
+      capturedRequest.stageName shouldBe "current"
+      val stageVars = capturedRequest.variables.asScala.to(LazyList)
       stageVars should contain("context" -> context)
       stageVars should contain("version" -> version)
     }
 
     "correctly handle UnauthorizedException thrown by AWS SDK when deploying API" in new Setup {
       val errorMessage = "You're an idiot"
-      when(mockAPIGatewayClient.createDeployment(any[CreateDeploymentRequest])).thenThrow(UnauthorizedException.builder().message(errorMessage).build())
+      val exception = UnauthorizedException.builder().message(errorMessage).build()
+      when(mockAPIGatewayClient.createDeployment(*[CreateDeploymentRequest])).thenThrow(exception)
 
       val ex: Exception = intercept[Exception]{
         deploymentService.deployApi("123", context, version, NoCloudWatchLogging, accessLogConfiguration)
@@ -68,22 +72,23 @@ class DeploymentServiceSpec extends WordSpecLike with Matchers with MockitoSugar
 
     "update the stage with extra settings" in new Setup {
       val importedRestApiId: String = UUID.randomUUID().toString
-      when(mockAPIGatewayClient.createDeployment(any[CreateDeploymentRequest])).thenReturn(CreateDeploymentResponse.builder().build())
-      val updateStageRequestCaptor: ArgumentCaptor[UpdateStageRequest] = ArgumentCaptor.forClass(classOf[UpdateStageRequest])
-      when(mockAPIGatewayClient.updateStage(updateStageRequestCaptor.capture())).thenReturn(UpdateStageResponse.builder().build())
+      when(mockAPIGatewayClient.createDeployment(any[CreateDeploymentRequest])).thenReturn(createDeploymentResponse)
+      when(mockAPIGatewayClient.updateStage(*[UpdateStageRequest])).thenReturn(updateStageResponse)
 
       deploymentService.deployApi(importedRestApiId, context, version, NoCloudWatchLogging, accessLogConfiguration)
 
-      val capturedRequest: UpdateStageRequest = updateStageRequestCaptor.getValue
+      val updateStageRequestCaptor = ArgCaptor[UpdateStageRequest]
+      verify(mockAPIGatewayClient).updateStage(updateStageRequestCaptor.capture)
+      val capturedRequest: UpdateStageRequest = updateStageRequestCaptor.value
       capturedRequest.restApiId shouldEqual importedRestApiId
       capturedRequest.stageName shouldEqual "current"
       val operations = capturedRequest.patchOperations.asScala
-      exactly(1, operations) should have('op (REPLACE), 'path ("/*/*/logging/loglevel"), 'value ("OFF"))
+      exactly(1, operations) should have(Symbol("op") (REPLACE), Symbol("path") ("/*/*/logging/loglevel"), Symbol("value") ("OFF"))
     }
 
     "correctly handle UnauthorizedException thrown by AWS SDK when updating stage with extra settings" in new Setup {
       val errorMessage = "You're an idiot"
-      when(mockAPIGatewayClient.createDeployment(any[CreateDeploymentRequest])).thenReturn(CreateDeploymentResponse.builder().build())
+      when(mockAPIGatewayClient.createDeployment(any[CreateDeploymentRequest])).thenReturn(createDeploymentResponse)
       when(mockAPIGatewayClient.updateStage(any[UpdateStageRequest])).thenThrow(UnauthorizedException.builder().message(errorMessage).build())
 
       val ex: Exception = intercept[Exception]{

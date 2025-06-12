@@ -19,16 +19,14 @@ package uk.gov.hmrc.api_platform_manage_api
 import io.swagger.models.{HttpMethod, Operation, Swagger}
 import io.swagger.parser.SwaggerParser
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.matching.Regex
 
 class SwaggerService(environment: Map[String, String]) {
 
   val serviceNameRegex: Regex = """(.+)\.protected\.mdtp""".r
 
-  def this() {
-    this(sys.env)
-  }
+  def this() = this(sys.env)
 
   def createSwagger(swaggerJson: String): Swagger = {
     val swagger: Swagger = new SwaggerParser().parse(swaggerJson)
@@ -58,8 +56,8 @@ class SwaggerService(environment: Map[String, String]) {
       Seq("integration.request.header.x-application-id" -> "context.authorizer.applicationId",
         "integration.request.header.Authorization" -> "context.authorizer.authBearerToken",
         "integration.request.header.X-Client-Authorization-Token" -> "context.authorizer.clientAuthToken",
-        "integration.request.header.X-Client-Id" -> "context.authorizer.clientId") ++:
-        operation._2.getParameters.asScala
+        "integration.request.header.X-Client-Id" -> "context.authorizer.clientId") ++
+        operation._2.getParameters().asScala
           .filter(p => p.getIn == "path")
           .map(p => s"integration.request.path.${p.getName}" -> s"method.request.path.${p.getName}")
 
@@ -86,7 +84,7 @@ class SwaggerService(environment: Map[String, String]) {
     ApiGatewayPolicy(statement = List(statement))
   }
 
-  private def amazonApigatewayResponses(version: String): Map[String, Object] = {
+  private def amazonApigatewayResponses(version: String): Map[String, Map[String, Object]] = {
     Map(
       "THROTTLED" -> Map("statusCode" -> "429", "responseTemplates" ->
         Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MESSAGE_THROTTLED_OUT", "message": "The request for the API is throttled as you have exceeded your quota."}""",

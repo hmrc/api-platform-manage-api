@@ -18,16 +18,15 @@ package uk.gov.hmrc.api_platform_manage_api
 
 import java.util.UUID
 
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{times, verify, when}
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Matchers, WordSpecLike}
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient
 import software.amazon.awssdk.services.apigateway.model._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
-class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
+class AwsIdRetrieverSpec extends AnyWordSpec with Matchers with MockitoSugar {
 
   trait Setup extends AwsIdRetriever {
     val mockApiGatewayClient: ApiGatewayClient = mock[ApiGatewayClient]
@@ -151,7 +150,7 @@ class AwsIdRetrieverSpec extends WordSpecLike with Matchers with MockitoSugar {
 
       val returnedKey: Option[ApiKey] = getAwsApiKeyByKeyName(keyName)
 
-      returnedKey.get should have ('id (apiKeyId), 'name (keyName))
+      returnedKey.get should have (Symbol("id") (apiKeyId), Symbol("name") (keyName))
     }
 
     "return None if key name is not found" in new Setup {
