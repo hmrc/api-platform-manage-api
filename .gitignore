@@ -9,6 +9,7 @@ target
 lib_managed
 tmp
 dist
+/.idea
 /*.iml
 /*.ipr
 /out
@@ -18,5 +19,10 @@ node_modules/
 npm-debug.log
 yarn-debug.log
 yarn-error.log
-
+.bloop/
+.metals/
+.vscode/
+.bsp/
+project/.bloop/
+project/metals.sbt
     

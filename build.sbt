@@ -4,10 +4,14 @@ import sbt._
 lazy val appName = "api-platform-manage-api"
 lazy val appDependencies: Seq[ModuleID] = compileDependencies ++ testDependencies
 
+lazy val jacksonVersion = "2.19.0"
+
 lazy val compileDependencies = Seq(
-  "uk.gov.hmrc"            %% "aws-gateway-proxied-request-lambda" % "0.14.0",
-  "software.amazon.awssdk"  % "apigateway"                         % "2.31.59",
-  "io.swagger"              % "swagger-parser"                     % "1.0.75"
+  "io.github.mkotsur"            %% "aws-lambda-scala"     % "0.3.0",
+  "com.fasterxml.jackson.core"    % "jackson-databind"     % jacksonVersion,
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+  "software.amazon.awssdk"        % "apigateway"           % "2.31.59",
+  "io.swagger"                    % "swagger-parser"       % "1.0.75"
 )
 
 lazy val testDependencies = Seq(

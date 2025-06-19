@@ -22,7 +22,7 @@ import com.stephenn.scalatest.jsonassert.JsonMatchers
 import io.swagger.models.Swagger
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import uk.gov.hmrc.aws_gateway_proxied_request_lambda.JsonMapper
+import uk.gov.hmrc.api_platform_manage_api.utils.JsonMapper
 
 import scala.jdk.CollectionConverters._
 
