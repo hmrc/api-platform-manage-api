@@ -17,17 +17,19 @@
 package uk.gov.hmrc.api_platform_manage_api.utils
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include
-import com.fasterxml.jackson.databind.{DeserializationFeature, MapperFeature, ObjectMapper}
-import com.fasterxml.jackson.module.scala.{DefaultScalaModule, ScalaObjectMapper}
+import com.fasterxml.jackson.databind.{DeserializationFeature, MapperFeature}
+import com.fasterxml.jackson.module.scala.{ClassTagExtensions, DefaultScalaModule, JavaTypeable}
+import com.fasterxml.jackson.databind.json
 
 trait JsonMapper {
-  val mapper = new ObjectMapper() with ScalaObjectMapper
-  mapper.registerModule(DefaultScalaModule)
-  mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-  mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-  mapper.setSerializationInclusion(Include.NON_NULL)
+  val mapper = json.JsonMapper.builder()
+    .addModule(DefaultScalaModule)
+    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+    .serializationInclusion(Include.NON_NULL)
+    .build() :: ClassTagExtensions
 
-  def fromJson[T](json: String)(implicit m : Manifest[T]): T = {
+  def fromJson[T](json: String)(implicit jt: JavaTypeable[T]): T = {
     mapper.readValue[T](json)
   }
 
