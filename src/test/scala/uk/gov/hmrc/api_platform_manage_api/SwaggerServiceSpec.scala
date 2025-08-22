@@ -184,7 +184,7 @@ class SwaggerServiceSpec extends AnyWordSpec with Matchers with JsonMatchers wit
           |        "x-amazon-apigateway-authtype": "custom",
           |        "x-amazon-apigateway-authorizer": {
           |            "type": "request",
-          |            "authorizerUri": "arn:aws:apigateway:application_authorizer",
+          |            "authorizerUri": "arn:aws:apigateway:application_authorizer:Active",
           |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
           |            "authorizerResultTtlInSeconds": "0",
           |            "identitySource": "method.request.header.Authorization"
@@ -196,7 +196,7 @@ class SwaggerServiceSpec extends AnyWordSpec with Matchers with JsonMatchers wit
           |        "in": "header",
           |        "x-amazon-apigateway-authtype": "custom",
           |        "x-amazon-apigateway-authorizer": {
-          |            "authorizerUri": "arn:aws:apigateway:user_authorizer",
+          |            "authorizerUri": "arn:aws:apigateway:user_authorizer:Active",
           |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
           |            "authorizerResultTtlInSeconds": "0",
           |            "identitySource": "method.request.header.Authorization",
@@ -209,7 +209,7 @@ class SwaggerServiceSpec extends AnyWordSpec with Matchers with JsonMatchers wit
           |        "in": "header",
           |        "x-amazon-apigateway-authtype": "custom",
           |        "x-amazon-apigateway-authorizer": {
-          |            "authorizerUri": "arn:aws:apigateway:open_authorizer",
+          |            "authorizerUri": "arn:aws:apigateway:open_authorizer:Active",
           |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
           |            "authorizerResultTtlInSeconds": "0",
           |            "identitySource": "context.httpMethod, context.path",

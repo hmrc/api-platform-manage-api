@@ -111,6 +111,8 @@ class SwaggerService(environment: Map[String, String]) {
   }
 
   private def securityDefinitions: Map[String, Object] = {
+    val publishedVersionAlias = "Active"
+
     val appAuthorizer = Map(
       "type" -> "apiKey",
       "name" -> "Authorization",
@@ -118,7 +120,7 @@ class SwaggerService(environment: Map[String, String]) {
       "x-amazon-apigateway-authtype" -> "custom",
       "x-amazon-apigateway-authorizer" -> Map(
         "type" -> "request",
-        "authorizerUri" -> environment("application_authorizer_uri"),
+        "authorizerUri" -> s"${environment("application_authorizer_uri")}:$publishedVersionAlias",
         "authorizerCredentials" -> environment("authorizer_credentials"),
         "authorizerResultTtlInSeconds" -> "0",
         "identitySource" -> "method.request.header.Authorization"))
@@ -130,7 +132,7 @@ class SwaggerService(environment: Map[String, String]) {
       "x-amazon-apigateway-authtype" -> "custom",
       "x-amazon-apigateway-authorizer" -> Map(
         "type" -> "request",
-        "authorizerUri" -> environment("user_authorizer_uri"),
+        "authorizerUri" -> s"${environment("user_authorizer_uri")}:$publishedVersionAlias",
         "authorizerCredentials" -> environment("authorizer_credentials"),
         "authorizerResultTtlInSeconds" -> "0",
         "identitySource" -> "method.request.header.Authorization"))
@@ -142,7 +144,7 @@ class SwaggerService(environment: Map[String, String]) {
       "x-amazon-apigateway-authtype" -> "custom",
       "x-amazon-apigateway-authorizer" -> Map(
         "type" -> "request",
-        "authorizerUri" -> environment("open_authorizer_uri"),
+        "authorizerUri" -> s"${environment("open_authorizer_uri")}:$publishedVersionAlias",
         "authorizerCredentials" -> environment("authorizer_credentials"),
         "authorizerResultTtlInSeconds" -> "0",
         "identitySource" -> "context.httpMethod, context.path"))
