@@ -137,6 +137,16 @@ class SwaggerServiceSpec extends AnyWordSpec with Matchers with JsonMatchers wit
           |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>"
           |    }
           |  },
+          |  "AUTHORIZER_CONFIGURATION_ERROR": {
+          |    "statusCode": "401",
+          |    "responseParameters": {
+          |      "gatewayresponse.header.www-authenticate": "'Bearer realm=\"HMRC API Platform\"'"
+          |    },
+          |    "responseTemplates": {
+          |      "application/vnd.hmrc.1.0+json": "{\"code\": \"INVALID_CREDENTIALS\", \"message\": \"Invalid Authentication information provided\"}",
+          |      "application/vnd.hmrc.1.0+xml": "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>"
+          |    }
+          |  },
           |  "ACCESS_DENIED": {
           |    "statusCode": "403",
           |    "responseParameters": {
