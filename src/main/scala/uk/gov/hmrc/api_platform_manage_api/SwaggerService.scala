@@ -85,6 +85,12 @@ class SwaggerService(environment: Map[String, String]) {
   }
 
   private def amazonApigatewayResponses(version: String): Map[String, Map[String, Object]] = {
+
+    val invalidCredentialsResponse = Map("statusCode" -> "401", "responseParameters" -> Map("gatewayresponse.header.www-authenticate" -> """'Bearer realm="HMRC API Platform"'"""),
+      "responseTemplates" ->
+        Map(s"application/vnd.hmrc.$version+json" -> """{"code": "INVALID_CREDENTIALS", "message": "Invalid Authentication information provided"}""",
+            s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>"))
+
     Map(
       "THROTTLED" -> Map("statusCode" -> "429", "responseTemplates" ->
         Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MESSAGE_THROTTLED_OUT", "message": "The request for the API is throttled as you have exceeded your quota."}""",
@@ -93,10 +99,8 @@ class SwaggerService(environment: Map[String, String]) {
         "responseTemplates" ->
           Map(s"application/vnd.hmrc.$version+json" -> """{"code": "MISSING_CREDENTIALS", "message": "Authentication information is not provided"}""",
               s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>MISSING_CREDENTIALS</code><message>Authentication information is not provided</message></errorResponse>")),
-      "INVALID_API_KEY" -> Map("statusCode" -> "401", "responseParameters" -> Map("gatewayresponse.header.www-authenticate" -> """'Bearer realm="HMRC API Platform"'"""),
-        "responseTemplates" ->
-          Map(s"application/vnd.hmrc.$version+json" -> """{"code": "INVALID_CREDENTIALS", "message": "Invalid Authentication information provided"}""",
-              s"application/vnd.hmrc.$version+xml" -> "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>")),
+      "INVALID_API_KEY" -> invalidCredentialsResponse,
+      "AUTHORIZER_CONFIGURATION_ERROR" -> invalidCredentialsResponse,
       "ACCESS_DENIED" -> Map("statusCode" -> "403", "responseParameters" -> Map("gatewayresponse.header.www-authenticate" -> """'Bearer realm="HMRC API Platform"'"""),
         "responseTemplates" ->
           Map(s"application/vnd.hmrc.$version+json" -> """{"code": "$context.authorizer.code", "message": "$context.authorizer.message"}""",
