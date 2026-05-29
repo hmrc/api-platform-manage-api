@@ -1,7 +1,7 @@
 
 # api-platform-manage-api
 
-This is a placeholder README.md for a new repository
+This is a library used by the api-platform-add-api-lambda
 
 ### License
 
