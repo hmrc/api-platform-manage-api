@@ -39,7 +39,8 @@ class SwaggerServiceSpec extends AnyWordSpec with Matchers with JsonMatchers wit
       "application_authorizer_uri" -> "arn:aws:apigateway:application_authorizer",
       "user_authorizer_uri" -> "arn:aws:apigateway:user_authorizer",
       "open_authorizer_uri" -> "arn:aws:apigateway:open_authorizer",
-      "authorizer_credentials" -> "arn:aws:iam::account-id:foobar"
+      "authorizer_credentials" -> "arn:aws:iam::account-id:foobar",
+      "authorizer_result_ttl_in_seconds" -> "30"
     )
 
     def swaggerJson(host: String = "api-example-microservice.protected.mdtp"): String =
@@ -72,6 +73,12 @@ class SwaggerServiceSpec extends AnyWordSpec with Matchers with JsonMatchers wit
   trait SetupForRegionalEndpoints extends Setup {
     val extraVariables: Map[String, String] = Map("endpoint_type" -> "REGIONAL")
     val swaggerService = new SwaggerService(environment ++ extraVariables)
+  }
+
+  trait SetupWithoutAuthorizerTtlEnvironmentVariable extends Setup {
+    val extraVariables: Map[String, String] = Map("vpc_endpoint_id" -> vpcEndpointId)
+    val environmentWithoutAuthTtl = environment - "authorizer_result_ttl_in_seconds"
+    val swaggerService = new SwaggerService(environmentWithoutAuthTtl ++ extraVariables)
   }
 
   "createSwagger" should {
@@ -170,6 +177,61 @@ class SwaggerServiceSpec extends AnyWordSpec with Matchers with JsonMatchers wit
     }
 
     "add security definitions" in new StandardSetup {
+      val expectedJson: String =
+        """{
+          |    "api-key": {
+          |      "type": "apiKey",
+          |      "name": "x-api-key",
+          |      "in": "header"
+          |    },
+          |    "application-authorizer": {
+          |        "type": "apiKey",
+          |        "name": "Authorization",
+          |        "in": "header",
+          |        "x-amazon-apigateway-authtype": "custom",
+          |        "x-amazon-apigateway-authorizer": {
+          |            "type": "request",
+          |            "authorizerUri": "arn:aws:apigateway:application_authorizer",
+          |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
+          |            "authorizerResultTtlInSeconds": "30",
+          |            "identitySource": "method.request.header.Authorization"
+          |        }
+          |    },
+          |    "user-authorizer": {
+          |        "type": "apiKey",
+          |        "name": "Authorization",
+          |        "in": "header",
+          |        "x-amazon-apigateway-authtype": "custom",
+          |        "x-amazon-apigateway-authorizer": {
+          |            "authorizerUri": "arn:aws:apigateway:user_authorizer",
+          |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
+          |            "authorizerResultTtlInSeconds": "0",
+          |            "identitySource": "method.request.header.Authorization",
+          |            "type": "request"
+          |        }
+          |    },
+          |    "open-authorizer": {
+          |        "type": "apiKey",
+          |        "name": "Unused",
+          |        "in": "header",
+          |        "x-amazon-apigateway-authtype": "custom",
+          |        "x-amazon-apigateway-authorizer": {
+          |            "authorizerUri": "arn:aws:apigateway:open_authorizer",
+          |            "authorizerCredentials": "arn:aws:iam::account-id:foobar",
+          |            "authorizerResultTtlInSeconds": "0",
+          |            "identitySource": "context.httpMethod, context.path",
+          |            "type": "request"
+          |        }
+          |    }
+          |}""".stripMargin
+
+      val swagger: Swagger = swaggerService.createSwagger(swaggerJson())
+
+      swagger.getVendorExtensions should contain key "securityDefinitions"
+      toJson(swagger.getVendorExtensions.get("securityDefinitions")) should matchJson(expectedJson)
+    }
+
+    "add security definitions but default authorizerResultTtlInSeconds to 0 when not present in env vars" in new SetupWithoutAuthorizerTtlEnvironmentVariable {
       val expectedJson: String =
         """{
           |    "api-key": {
